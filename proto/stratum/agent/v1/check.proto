@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package stratum.agent.v1;
+
+import "buf/validate/validate.proto";
+import "stratum/agent/v1/capture.proto";
+
+// CheckService runs a pull request check. The check action authenticates
+// with its GitHub Actions OIDC token, whose repository must own the project;
+// it can read the latest snapshot and report results, never upload a
+// snapshot.
+service CheckService {
+  // BeginCheck registers a check run and returns the snapshot to restore.
+  rpc BeginCheck(BeginCheckRequest) returns (BeginCheckResponse);
+  // ReportCheck sends what happened in the runner. Stratum evaluates the
+  // rules afterwards; poll GetCheckVerdict for the result.
+  rpc ReportCheck(ReportCheckRequest) returns (ReportCheckResponse);
+  // GetCheckVerdict returns the verdict once Stratum has one.
+  rpc GetCheckVerdict(GetCheckVerdictRequest) returns (GetCheckVerdictResponse);
+}
+
+message PullRequest {
+  int32 number = 1 [(buf.validate.field).int32.gt = 0];
+  string title = 2 [(buf.validate.field).string.max_len = 1024];
+  string author = 3 [(buf.validate.field).string.max_len = 100];
+  string head_branch = 4 [(buf.validate.field).string.max_len = 255];
+  string base_branch = 5 [(buf.validate.field).string.max_len = 255];
+  string head_sha = 6 [(buf.validate.field).string.max_len = 64];
+}
+
+message BeginCheckRequest {
+  // project is "org/slug".
+  string project = 1 [(buf.validate.field).string = {
+    min_len: 3
+    max_len: 201
+  }];
+  PullRequest pull_request = 2 [(buf.validate.field).required = true];
+  // workflow_run_id and run_attempt identify the GitHub Actions run, so a
+  // re-run is a new attempt and a retried request is the same one.
+  int64 workflow_run_id = 3;
+  int32 run_attempt = 4;
+  string agent_version = 5 [(buf.validate.field).string.max_len = 64];
+  // fail_on_unreachable echoes the workflow input, for the console to show.
+  bool fail_on_unreachable = 6;
+}
+
+message BeginCheckResponse {
+  string check_id = 1;
+  // snapshot is the latest production snapshot, gzipped JSON.
+  bytes snapshot = 2;
+  // snapshot_version is its label, e.g. S-24.
+  string snapshot_version = 3;
+  MigrationTool tool = 4;
+  string min_agent_version = 5;
+}
+
+// StepStatus is how one step of the run ended.
+enum StepStatus {
+  STEP_STATUS_UNSPECIFIED = 0;
+  STEP_STATUS_OK = 1;
+  STEP_STATUS_FAILED = 2;
+  STEP_STATUS_SKIPPED = 3;
+  // The step found a problem with the setup, not with the migrations.
+  STEP_STATUS_SETUP_PROBLEM = 4;
+}
+
+message Step {
+  string name = 1;
+  string detail = 2;
+  StepStatus status = 3;
+  int64 duration_ms = 4;
+}
+
+// MigrationSource says where a pending migration came from.
+enum MigrationSource {
+  MIGRATION_SOURCE_UNSPECIFIED = 0;
+  // Merged to the base branch but not yet deployed.
+  MIGRATION_SOURCE_BASE = 1;
+  // Added or changed by the pull request.
+  MIGRATION_SOURCE_PULL_REQUEST = 2;
+}
+
+message Migration {
+  string version = 1;
+  // file is the path relative to the repository root.
+  string file = 2;
+  MigrationSource source = 3;
+  // sql is the file's content, empty for migrations that aren't SQL files,
+  // such as Java migrations.
+  string sql = 4;
+  bool applied = 5;
+  // error is the migrate command's output when this migration failed.
+  string error = 6;
+  // changes is the schema diff this migration made, as the schema package's
+  // JSON.
+  bytes changes = 7;
+}
+
+message ReportCheckRequest {
+  string check_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated Step steps = 2;
+  // setup_problem is set when the restore didn't match the snapshot, or the
+  // check couldn't run for another reason that isn't the migrations' fault.
+  string setup_problem = 3;
+  repeated Migration migrations = 4;
+  // applied_file_changed lists migrations already applied in production
+  // whose file content changed.
+  repeated string applied_file_changed = 5;
+  // result_schema is the schema after every migration, as JSON.
+  bytes result_schema = 6;
+  int64 duration_ms = 7;
+}
+
+message ReportCheckResponse {}
+
+message GetCheckVerdictRequest {
+  string check_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+// Conclusion is the check's verdict.
+enum Conclusion {
+  CONCLUSION_UNSPECIFIED = 0;
+  CONCLUSION_PASSED = 1;
+  CONCLUSION_WARNINGS = 2;
+  CONCLUSION_FAILED = 3;
+  // The check couldn't test the migrations; it doesn't block merging.
+  CONCLUSION_SETUP_PROBLEM = 4;
+}
+
+// Severity is a finding's severity.
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_WARNING = 1;
+  SEVERITY_ERROR = 2;
+}
+
+message Finding {
+  string rule = 1;
+  Severity severity = 2;
+  string file = 3;
+  int32 line = 4;
+  string title = 5;
+  string detail = 6;
+  string fix = 7;
+  string fix_sql = 8;
+}
+
+message GetCheckVerdictResponse {
+  // ready is false while Stratum is still evaluating.
+  bool ready = 1;
+  Conclusion conclusion = 2;
+  repeated Finding findings = 3;
+  string setup_problem = 4;
+  // details_url is the check's page in the console.
+  string details_url = 5;
+}

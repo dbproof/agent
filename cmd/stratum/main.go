@@ -15,6 +15,7 @@ const usage = `Usage: stratum <command> [flags]
 
 Commands:
   capture   capture the production schema, statistics and migration history
+  check     test a pull request's migrations against the latest snapshot
   version   print the agent version
 
 Run "stratum <command> -h" for a command's flags.
@@ -28,6 +29,8 @@ func main() {
 	switch os.Args[1] {
 	case "capture":
 		os.Exit(runCapture(os.Args[2:]))
+	case "check":
+		os.Exit(runCheck(os.Args[2:]))
 	case "version":
 		fmt.Println(version)
 	default:

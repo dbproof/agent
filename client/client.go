@@ -18,13 +18,15 @@ import (
 // Client is an authenticated connection to Stratum.
 type Client struct {
 	Capture agentv1connect.CaptureServiceClient
+	Check   agentv1connect.CheckServiceClient
 }
 
 // Options configures a Client.
 type Options struct {
 	// BaseURL is Stratum's address, e.g. https://stratum.example.com.
 	BaseURL string
-	// Token is the capture token, sent as a bearer token.
+	// Token is sent as a bearer token: the capture token, or the check's
+	// GitHub Actions OIDC token.
 	Token string
 	// Project names the project ("org/slug") for Stratum's local dev mode,
 	// where one fixed token serves every project.
@@ -41,6 +43,7 @@ func New(opts Options) *Client {
 	base := opts.BaseURL + "/ingest"
 	return &Client{
 		Capture: agentv1connect.NewCaptureServiceClient(httpClient, base, interceptors),
+		Check:   agentv1connect.NewCheckServiceClient(httpClient, base, interceptors),
 	}
 }
 
