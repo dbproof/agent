@@ -16,7 +16,13 @@ linters:
         # docs explain them.
         - name: exported
           disabled: true
+  exclusions:
+    paths:
+      - gen
 formatters:
   enable:
     - gofmt
     - goimports
+  exclusions:
+    paths:
+      - gen
