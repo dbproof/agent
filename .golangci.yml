@@ -1,0 +1,22 @@
+version: "2"
+linters:
+  default: standard
+  enable:
+    - errorlint
+    - gocritic
+    - misspell
+    - nolintlint
+    - revive
+    - unconvert
+  settings:
+    revive:
+      enable-default-rules: true
+      rules:
+        # Model types and enum constants are self-describing; the package
+        # docs explain them.
+        - name: exported
+          disabled: true
+formatters:
+  enable:
+    - gofmt
+    - goimports

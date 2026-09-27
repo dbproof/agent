@@ -1,0 +1,13 @@
+# Postgres servers for the schema round-trip tests: the oldest and newest supported
+# majors. The newest runs the pgvector image, which pagila.sql needs.
+services:
+  pg13:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ["54313:5432"]
+  pg18:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ["54318:5432"]
