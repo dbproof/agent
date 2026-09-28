@@ -44,7 +44,7 @@ func runCheck(args []string) int {
 	fs.StringVar(&f.database, "database", os.Getenv("STRATUM_CHECK_DSN"), "postgres:// URL of an empty throwaway database, as a superuser")
 	fs.StringVar(&f.migrationsDir, "migrations-dir", "", "the migrations folder")
 	fs.StringVar(&f.migrateCommand, "migrate-command", "", "your migrate command, e.g. flyway -url=$STRATUM_CHECK_JDBC_URL -user=$STRATUM_CHECK_USER -password=$STRATUM_CHECK_PASSWORD migrate")
-	fs.StringVar(&f.prFiles, "pull-request-files", "", "comma-separated migration files the pull request adds or changes; default: git diff against -base-ref")
+	fs.StringVar(&f.prFiles, "pull-request-files", "", "comma-separated migration files the pull request adds or changes, relative to the working directory; default: git diff against -base-ref")
 	fs.StringVar(&f.baseRef, "base-ref", os.Getenv("GITHUB_BASE_REF"), "the pull request's base branch")
 	fs.StringVar(&f.repoRoot, "repo-root", envOr("GITHUB_WORKSPACE", "."), "the repository root, for file paths in annotations")
 	fs.DurationVar(&f.verdictTimeout, "verdict-timeout", 3*time.Minute, "how long to wait for Stratum's verdict")
@@ -224,9 +224,8 @@ func pullRequestFiles(f checkFlags) ([]string, error) {
 		if p == "" {
 			continue
 		}
-		if !filepath.IsAbs(p) {
-			p = filepath.Join(f.repoRoot, p)
-		}
+		// Relative paths resolve from the working directory, like
+		// -migrations-dir; -repo-root only shortens paths in annotations.
 		abs, err := filepath.Abs(p)
 		if err != nil {
 			return nil, err
