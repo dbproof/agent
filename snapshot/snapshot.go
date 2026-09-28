@@ -11,7 +11,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/stratum-dev/agent/schema"
+	"github.com/borovikovd/stratum-agent/schema"
 )
 
 // FormatVersion is the snapshot format this agent writes. Readers accept any

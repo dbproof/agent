@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stratum-dev/agent/capture"
-	"github.com/stratum-dev/agent/internal/pgtest"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/capture"
+	"github.com/borovikovd/stratum-agent/internal/pgtest"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // setup runs the DBA setup script, minus CREATE ROLE: roles are cluster-wide,

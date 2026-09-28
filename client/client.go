@@ -11,9 +11,9 @@ import (
 
 	"connectrpc.com/connect"
 
-	agentv1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
-	"github.com/stratum-dev/agent/gen/stratum/agent/v1/agentv1connect"
-	"github.com/stratum-dev/agent/snapshot"
+	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
+	"github.com/borovikovd/stratum-agent/gen/stratum/agent/v1/agentv1connect"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // Client is an authenticated connection to Stratum.

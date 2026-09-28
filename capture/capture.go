@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/stratum-dev/agent/schema"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // Config says what to capture.

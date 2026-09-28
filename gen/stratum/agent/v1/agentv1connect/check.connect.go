@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
+	v1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
 	http "net/http"
 	strings "strings"
 )

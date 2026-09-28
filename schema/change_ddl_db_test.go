@@ -3,8 +3,8 @@ package schema_test
 import (
 	"testing"
 
-	"github.com/stratum-dev/agent/internal/pgtest"
-	"github.com/stratum-dev/agent/schema"
+	"github.com/borovikovd/stratum-agent/internal/pgtest"
+	"github.com/borovikovd/stratum-agent/schema"
 )
 
 // TestChangeDDL applies the DDL for a diff to a restore of the "before"

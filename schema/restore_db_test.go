@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stratum-dev/agent/internal/pgtest"
-	"github.com/stratum-dev/agent/schema"
+	"github.com/borovikovd/stratum-agent/internal/pgtest"
+	"github.com/borovikovd/stratum-agent/schema"
 )
 
 // TestRoundTrip is the schema engine's acceptance test: inspecting a schema as

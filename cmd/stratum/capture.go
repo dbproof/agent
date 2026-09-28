@@ -13,10 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/stratum-dev/agent/capture"
-	"github.com/stratum-dev/agent/client"
-	agentv1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/capture"
+	"github.com/borovikovd/stratum-agent/client"
+	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 type stringList []string

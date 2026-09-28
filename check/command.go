@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // CommandMigrator runs the customer's own migrate command, such as

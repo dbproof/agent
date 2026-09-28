@@ -11,11 +11,11 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/stratum-dev/agent/capture"
-	"github.com/stratum-dev/agent/check"
-	"github.com/stratum-dev/agent/internal/pgtest"
-	"github.com/stratum-dev/agent/schema"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/capture"
+	"github.com/borovikovd/stratum-agent/check"
+	"github.com/borovikovd/stratum-agent/internal/pgtest"
+	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // flywayLike applies migration files up to a target the way Flyway would:

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/stratum-dev/agent/schema"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // Role is the name of the capture role the setup script creates.

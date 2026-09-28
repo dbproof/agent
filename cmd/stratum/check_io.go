@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stratum-dev/agent/check"
-	agentv1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
+	"github.com/borovikovd/stratum-agent/check"
+	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
 )
 
 // pullRequest describes the pull request under check: from flags, or from

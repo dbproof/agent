@@ -17,9 +17,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/stratum-dev/agent/capture"
-	"github.com/stratum-dev/agent/schema"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/capture"
+	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // Migrator applies migrations up to and including a version. CommandMigrator

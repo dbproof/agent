@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // File is one versioned migration in the repository.

@@ -15,10 +15,10 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/stratum-dev/agent/check"
-	"github.com/stratum-dev/agent/client"
-	agentv1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
-	"github.com/stratum-dev/agent/snapshot"
+	"github.com/borovikovd/stratum-agent/check"
+	"github.com/borovikovd/stratum-agent/client"
+	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
+	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
 // errUnavailable means Stratum couldn't be reached or didn't answer in time.

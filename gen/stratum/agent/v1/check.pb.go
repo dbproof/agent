@@ -1110,9 +1110,9 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\n" +
 	"BeginCheck\x12#.stratum.agent.v1.BeginCheckRequest\x1a$.stratum.agent.v1.BeginCheckResponse\x12Z\n" +
 	"\vReportCheck\x12$.stratum.agent.v1.ReportCheckRequest\x1a%.stratum.agent.v1.ReportCheckResponse\x12f\n" +
-	"\x0fGetCheckVerdict\x12(.stratum.agent.v1.GetCheckVerdictRequest\x1a).stratum.agent.v1.GetCheckVerdictResponseB\xbf\x01\n" +
+	"\x0fGetCheckVerdict\x12(.stratum.agent.v1.GetCheckVerdictRequest\x1a).stratum.agent.v1.GetCheckVerdictResponseB\xc6\x01\n" +
 	"\x14com.stratum.agent.v1B\n" +
-	"CheckProtoP\x01Z9github.com/stratum-dev/agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
+	"CheckProtoP\x01Z@github.com/borovikovd/stratum-agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
 
 var (
 	file_stratum_agent_v1_check_proto_rawDescOnce sync.Once

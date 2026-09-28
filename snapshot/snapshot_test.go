@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stratum-dev/agent/schema"
+	"github.com/borovikovd/stratum-agent/schema"
 )
 
 func TestEncodeDecode(t *testing.T) {

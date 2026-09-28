@@ -352,8 +352,8 @@ const file_stratum_agent_v1_capture_proto_rawDesc = "" +
 	"\x14MIGRATION_TOOL_ATLAS\x10\x022\xe0\x01\n" +
 	"\x0eCaptureService\x12i\n" +
 	"\x10GetCaptureConfig\x12).stratum.agent.v1.GetCaptureConfigRequest\x1a*.stratum.agent.v1.GetCaptureConfigResponse\x12c\n" +
-	"\x0eUploadSnapshot\x12'.stratum.agent.v1.UploadSnapshotRequest\x1a(.stratum.agent.v1.UploadSnapshotResponseB\xc1\x01\n" +
-	"\x14com.stratum.agent.v1B\fCaptureProtoP\x01Z9github.com/stratum-dev/agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
+	"\x0eUploadSnapshot\x12'.stratum.agent.v1.UploadSnapshotRequest\x1a(.stratum.agent.v1.UploadSnapshotResponseB\xc8\x01\n" +
+	"\x14com.stratum.agent.v1B\fCaptureProtoP\x01Z@github.com/borovikovd/stratum-agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
 
 var (
 	file_stratum_agent_v1_capture_proto_rawDescOnce sync.Once

@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/stratum-dev/agent/internal/pgtest"
-	"github.com/stratum-dev/agent/schema"
+	"github.com/borovikovd/stratum-agent/internal/pgtest"
+	"github.com/borovikovd/stratum-agent/schema"
 )
 
 // TestDiffDetectsChanges makes one change of each kind against a real

@@ -1,4 +1,4 @@
-module github.com/stratum-dev/agent
+module github.com/borovikovd/stratum-agent
 
 go 1.27.1
 
