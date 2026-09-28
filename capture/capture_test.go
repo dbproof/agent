@@ -120,3 +120,30 @@ func findStats(s *snapshot.Snapshot, table string) *snapshot.TableStats {
 	}
 	return nil
 }
+
+// Capture reads only a history table's own columns, and refuses a table
+// that isn't one, even for a role that could read the application's rows.
+func TestCaptureReadsOnlyTheHistoryTable(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	db := pgtest.NewDB(t, server)
+	pgtest.ExecFile(t, db, "../testdata/schemas/billing.sql")
+	pgtest.Exec(t, db, `
+		ALTER TABLE flyway_schema_history ADD COLUMN note text;
+		INSERT INTO flyway_schema_history VALUES (1, '1', 'init', 'SQL', 'V1__init.sql', 123, 'deploy', now(), 10, true, 'private');
+		INSERT INTO customers (name, email) VALUES ('Ada', 'ada@example.com');`)
+	setup(t, db, snapshot.ToolFlyway)
+	owner := pgtest.Connect(t, db)
+	ctx := context.Background()
+
+	snap, err := capture.Run(ctx, owner, capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(snap.History.Columns, "note") {
+		t.Fatalf("history columns = %v, want Flyway's own only", snap.History.Columns)
+	}
+	_, err = capture.Run(ctx, owner, capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway, HistoryTable: "public.customers"})
+	if err == nil || !strings.Contains(err.Error(), "isn't a flyway history table") {
+		t.Fatalf("capture with customers as the history = %v, want a refusal", err)
+	}
+}

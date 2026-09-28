@@ -44,6 +44,11 @@ func (m CommandMigrator) Env() ([]string, error) {
 		"STRATUM_CHECK_DB=" + db,
 		"STRATUM_CHECK_USER=" + u.User.Username(),
 		"STRATUM_CHECK_PASSWORD=" + password,
+		// Flyway reads these when the command doesn't say where to migrate,
+		// ahead of a flyway.conf that could name another database.
+		"FLYWAY_URL=jdbc:postgresql://" + u.Hostname() + ":" + port + "/" + db,
+		"FLYWAY_USER=" + u.User.Username(),
+		"FLYWAY_PASSWORD=" + password,
 	}, nil
 }
 

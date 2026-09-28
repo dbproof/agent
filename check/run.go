@@ -7,6 +7,7 @@ package check
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -120,6 +121,14 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	r.step(verifyName, "Schema identical", StatusOK, stepStart)
 
 	applied := capture.Applied(cfg.Snapshot.History)
+	// A pull request that edits a migration production already ran, or adds
+	// one with a version it already ran, applies nothing here and would pass,
+	// then fail on deploy.
+	for _, f := range cfg.Files {
+		if slices.Contains(applied, f.Version) && slices.Contains(cfg.PullRequestFiles, f.Path) {
+			r.changedApplied(f.Version)
+		}
+	}
 	var base, pr []Migration
 	for _, f := range cfg.Files {
 		if slices.Contains(applied, f.Version) {
@@ -158,10 +167,16 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 		for i := range group.migrations {
 			m := &group.migrations[i]
 			next, changedFiles, err := r.apply(ctx, cfg, m, current)
+			if errors.Is(err, errNotRecorded) {
+				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show V%s, so it ran against another database. Point it at the check database: -url=$STRATUM_CHECK_JDBC_URL for Flyway, --url \"$STRATUM_CHECK_DSN\" for Atlas.", m.Version), stepStart)
+				return done(), nil
+			}
 			if err != nil {
 				return nil, err
 			}
-			r.AppliedFileChanged = append(r.AppliedFileChanged, changedFiles...)
+			for _, v := range changedFiles {
+				r.changedApplied(v)
+			}
 			r.Migrations = append(r.Migrations, *m)
 			if !m.Applied {
 				failed = true
@@ -200,6 +215,13 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	if err != nil {
 		return nil, nil, fmt.Errorf("inspect after V%s: %w", m.Version, err)
 	}
+	recorded, err := historyShows(ctx, cfg, m.Version)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !recorded {
+		return before, nil, errNotRecorded
+	}
 	m.Applied = true
 	var opts schema.DiffOptions
 	if cfg.Snapshot.History != nil {
@@ -207,6 +229,35 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	}
 	m.Changes = schema.Diff(before, after, opts)
 	return after, nil, nil
+}
+
+// errNotRecorded means the migrate command succeeded without applying the
+// migration to the check database: it ran somewhere else.
+var errNotRecorded = errors.New("migration not recorded in the check database")
+
+// historyShows reports whether the check database's history table records
+// version as applied. Without a history table there's nothing to check.
+func historyShows(ctx context.Context, cfg Config, version string) (bool, error) {
+	h := cfg.Snapshot.History
+	if h == nil {
+		return true, nil
+	}
+	sql := "SELECT EXISTS (SELECT 1 FROM " + h.Table + " WHERE version = $1)"
+	if cfg.Tool == snapshot.ToolFlyway {
+		sql = "SELECT EXISTS (SELECT 1 FROM " + h.Table + " WHERE version = $1 AND success)"
+	}
+	var ok bool
+	if err := cfg.Conn.QueryRow(ctx, sql, version).Scan(&ok); err != nil {
+		return false, fmt.Errorf("read the check database's history: %w", err)
+	}
+	return ok, nil
+}
+
+// changedApplied records a version whose applied migration file changed.
+func (r *Report) changedApplied(version string) {
+	if !slices.Contains(r.AppliedFileChanged, version) {
+		r.AppliedFileChanged = append(r.AppliedFileChanged, version)
+	}
 }
 
 var checksumMismatch = regexp.MustCompile(`(?i)checksum mismatch for migration version (\S+)`)

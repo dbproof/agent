@@ -192,11 +192,22 @@ func pullRequestFiles(f checkFlags) ([]string, error) {
 		if f.baseRef == "" {
 			return nil, errors.New("set -pull-request-files or -base-ref")
 		}
-		out, err := exec.Command("git", "diff", "--name-only", "--diff-filter=AM", "origin/"+f.baseRef+"...HEAD", "--", f.migrationsDir).Output()
+		// Renamed files count: renumbering a migration is a rename.
+		out, err := exec.Command("git", "diff", "--name-only", "--diff-filter=AMR", "origin/"+f.baseRef+"...HEAD", "--", f.migrationsDir).Output()
 		if err != nil {
 			return nil, fmt.Errorf("git diff against %s (check out with fetch-depth: 0): %w", f.baseRef, err)
 		}
 		names = strings.Fields(string(out))
+		// git names files from the repository's top level, which isn't the
+		// workspace when the workflow checks out into a subfolder.
+		top, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+		if err != nil {
+			return nil, fmt.Errorf("find the repository root: %w", err)
+		}
+		root := strings.TrimSpace(string(top))
+		for i, n := range names {
+			names[i] = filepath.Join(root, n)
+		}
 	}
 	var paths []string
 	for _, n := range names {

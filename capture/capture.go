@@ -135,14 +135,50 @@ func deref[T any](p *T) T {
 	return *p
 }
 
+// historyColumns are the columns each tool's history table has, in the
+// order capture reads them; required are the ones it can't do without.
+var historyColumns = map[snapshot.Tool]struct{ all, required []string }{
+	snapshot.ToolFlyway: {
+		all:      []string{"installed_rank", "version", "description", "type", "script", "checksum", "installed_by", "installed_on", "execution_time", "success"},
+		required: []string{"installed_rank", "version", "script", "success"},
+	},
+	snapshot.ToolAtlas: {
+		all:      []string{"version", "description", "type", "applied", "total", "executed_at", "execution_time", "error", "error_stmt", "hash", "partial_hashes", "operator_version"},
+		required: []string{"version", "applied", "total"},
+	},
+}
+
 // readHistory copies the history table row by row, as text. The simple
-// protocol makes Postgres send every value as text, whatever its type.
+// protocol makes Postgres send every value as text, whatever its type. It
+// reads only the tool's own history columns, and refuses a table that
+// doesn't have them: capture never reads an application's rows, even when
+// the history table is misconfigured and the role could read that table.
 func readHistory(ctx context.Context, conn *pgx.Conn, tool snapshot.Tool, table string) (*snapshot.History, error) {
 	ident, err := quoteTable(table)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := conn.Query(ctx, "SELECT * FROM "+ident+" ORDER BY 1", pgx.QueryExecModeSimpleProtocol)
+	want, ok := historyColumns[tool]
+	if !ok {
+		return nil, fmt.Errorf("unknown migration tool %q", tool)
+	}
+	var present []string
+	if err := pgxscan(ctx, conn, &present, `SELECT a.attname::text FROM pg_attribute a
+		WHERE a.attrelid = to_regclass($1) AND a.attnum > 0 AND NOT a.attisdropped`, ident); err != nil {
+		return nil, fmt.Errorf("read the columns of %s: %w", table, err)
+	}
+	for _, c := range want.required {
+		if !slices.Contains(present, c) {
+			return nil, fmt.Errorf("%s isn't a %s history table: it has no %s column", table, tool, c)
+		}
+	}
+	var cols []string
+	for _, c := range want.all {
+		if slices.Contains(present, c) {
+			cols = append(cols, pgx.Identifier{c}.Sanitize())
+		}
+	}
+	rows, err := conn.Query(ctx, "SELECT "+strings.Join(cols, ", ")+" FROM "+ident+" ORDER BY 1", pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
 		return nil, fmt.Errorf("read migration history from %s: %w", table, err)
 	}
@@ -238,4 +274,14 @@ func succeeded(h *snapshot.History, row []*string) (bool, error) {
 		return applied != nil && total != nil && *applied == *total, nil
 	}
 	return false, errors.New("unknown migration tool")
+}
+
+// pgxscan reads one text column of a query into out.
+func pgxscan(ctx context.Context, conn *pgx.Conn, out *[]string, sql string, args ...any) error {
+	rows, err := conn.Query(ctx, sql, args...)
+	if err != nil {
+		return err
+	}
+	*out, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	return err
 }

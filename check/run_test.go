@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -201,5 +203,40 @@ func TestCheckRefusesADatabaseWithTables(t *testing.T) {
 	}
 	if r.SetupProblem == "" {
 		t.Fatal("the check ran against a database that already had tables")
+	}
+}
+
+// A pull request that edits a migration production already ran applies
+// nothing here; it must still be reported, or the check passes and the
+// deploy fails.
+func TestCheckFlagsAnEditedDeployedMigration(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	snap := production(t, server)
+	dir, files := writeFiles(t, with(map[string]string{"V3__credit_notes.sql": "-- edited after deploy"}))
+	r := runCheck(t, server, snap, dir, files, "V3__credit_notes.sql")
+	if !slices.Equal(r.AppliedFileChanged, []string{"3"}) || len(r.Migrations) != 0 {
+		t.Fatalf("report = %+v, want V3 reported as a changed applied file", r)
+	}
+}
+
+// missesTheDatabase is a migrate command that succeeds somewhere else.
+type missesTheDatabase struct{}
+
+func (missesTheDatabase) Migrate(context.Context, string) (string, error) { return "ok", nil }
+
+func TestCheckNoticesAMigrateCommandAimedElsewhere(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	snap := production(t, server)
+	dir, files := writeFiles(t, with(map[string]string{"V4__add_email.sql": "ALTER TABLE customers ADD COLUMN email text;"}))
+	conn := pgtest.Connect(t, pgtest.NewDB(t, server))
+	r, err := check.Run(context.Background(), check.Config{
+		Conn: conn, Snapshot: snap, SnapshotLabel: "S-7", Tool: snapshot.ToolFlyway,
+		Files: files, PullRequestFiles: []string{filepath.Join(dir, "V4__add_email.sql")}, Migrator: missesTheDatabase{}, MigratorName: "flyway migrate",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.SetupProblem, "ran against another database") {
+		t.Fatalf("report = %+v, want a setup problem", r)
 	}
 }

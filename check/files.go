@@ -1,7 +1,7 @@
 package check
 
 import (
-	"os"
+	"io/fs"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -26,31 +26,38 @@ var (
 )
 
 // ListFiles returns the tool's versioned migrations in dir, in the order the
-// tool applies them. Flyway's repeatable (R__) migrations and anything that
-// isn't SQL are left out.
+// tool applies them. Flyway scans subfolders too; Atlas reads one folder.
+// Flyway's repeatable (R__) migrations and anything that isn't SQL are left
+// out.
 func ListFiles(tool snapshot.Tool, dir string) ([]File, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
 	pattern := flywayFile
 	if tool == snapshot.ToolAtlas {
 		pattern = atlasFile
 	}
 	var files []File
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-		m := pattern.FindStringSubmatch(e.Name())
+		if d.IsDir() {
+			if path != dir && tool == snapshot.ToolAtlas {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		m := pattern.FindStringSubmatch(d.Name())
 		if m == nil {
-			continue
+			return nil
 		}
 		version := m[1]
 		if tool == snapshot.ToolFlyway {
 			version = strings.ReplaceAll(version, "_", ".")
 		}
-		files = append(files, File{Version: version, Path: filepath.Join(dir, e.Name())})
+		files = append(files, File{Version: version, Path: path})
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	slices.SortFunc(files, func(a, b File) int { return compareVersions(a.Version, b.Version) })
 	return files, nil
