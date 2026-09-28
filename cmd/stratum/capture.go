@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -77,7 +76,7 @@ Flags:`)
 		}
 		warn("Stratum is unreachable (%v); capturing with local settings, then retrying the upload", err)
 	} else {
-		cfg.Tool = snapshot.Tool(client.Tool(remote.Msg.GetTool()))
+		cfg.Tool = client.Tool(remote.Msg.GetTool())
 		cfg.HistoryTable = remote.Msg.GetHistoryTable()
 		cfg.Exclude = remote.Msg.GetExclusions()
 		fmt.Fprintf(os.Stderr, "Capturing %s for %s\n", k, remote.Msg.GetProject())
@@ -134,9 +133,4 @@ func captureDatabase(ctx context.Context, dsn string, cfg capture.Config) (*snap
 	runCtx, cancelRun := context.WithTimeout(ctx, cfg.WaitTimeout+5*time.Minute)
 	defer cancelRun()
 	return capture.Run(runCtx, conn, cfg)
-}
-
-func isUnreachable(err error) bool {
-	code := connect.CodeOf(err)
-	return code == connect.CodeUnavailable || code == connect.CodeDeadlineExceeded || errors.Is(err, context.DeadlineExceeded)
 }

@@ -13,6 +13,7 @@ import (
 
 	agentv1 "github.com/stratum-dev/agent/gen/stratum/agent/v1"
 	"github.com/stratum-dev/agent/gen/stratum/agent/v1/agentv1connect"
+	"github.com/stratum-dev/agent/snapshot"
 )
 
 // Client is an authenticated connection to Stratum.
@@ -92,12 +93,12 @@ func retryable(err error) bool {
 }
 
 // Tool converts the API's migration tool to the snapshot's.
-func Tool(t agentv1.MigrationTool) string {
+func Tool(t agentv1.MigrationTool) snapshot.Tool {
 	switch t {
 	case agentv1.MigrationTool_MIGRATION_TOOL_ATLAS:
-		return "atlas"
+		return snapshot.ToolAtlas
 	case agentv1.MigrationTool_MIGRATION_TOOL_FLYWAY:
-		return "flyway"
+		return snapshot.ToolFlyway
 	}
 	return ""
 }

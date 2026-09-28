@@ -2,7 +2,6 @@ package schema
 
 import (
 	"slices"
-	"strings"
 )
 
 // RestoreDDL returns the statements that recreate s in an empty database, in
@@ -189,14 +188,4 @@ func topoSort[T any](items []T, id func(*T) string, deps func(*T) []string) []T 
 		visit(i)
 	}
 	return out
-}
-
-// Script joins statements into one SQL script.
-func Script(stmts []string) string {
-	var b strings.Builder
-	for _, s := range stmts {
-		b.WriteString(s)
-		b.WriteString(";\n")
-	}
-	return b.String()
 }

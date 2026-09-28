@@ -5,7 +5,6 @@ package capture
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -252,7 +251,7 @@ func Applied(h *snapshot.History) []string {
 		if v == nil || *v == "" {
 			continue
 		}
-		if ok, err := succeeded(h, row); err == nil && ok {
+		if succeeded(h, row) {
 			out = append(out, *v)
 		}
 	}
@@ -261,19 +260,19 @@ func Applied(h *snapshot.History) []string {
 
 // succeeded reads a history row's outcome: Flyway records a success flag;
 // Atlas records applied and total statement counts and an error.
-func succeeded(h *snapshot.History, row []*string) (bool, error) {
+func succeeded(h *snapshot.History, row []*string) bool {
 	switch h.Tool {
 	case snapshot.ToolFlyway:
 		s := h.Value(row, "success")
-		return s != nil && (*s == "t" || *s == "true"), nil
+		return s != nil && (*s == "t" || *s == "true")
 	case snapshot.ToolAtlas:
 		errText, applied, total := h.Value(row, "error"), h.Value(row, "applied"), h.Value(row, "total")
 		if errText != nil && *errText != "" {
-			return false, nil
+			return false
 		}
-		return applied != nil && total != nil && *applied == *total, nil
+		return applied != nil && total != nil && *applied == *total
 	}
-	return false, errors.New("unknown migration tool")
+	return false
 }
 
 // pgxscan reads one text column of a query into out.

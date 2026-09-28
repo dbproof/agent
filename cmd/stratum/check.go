@@ -110,7 +110,7 @@ func checkPullRequest(ctx context.Context, stratumURL string, f checkFlags) (*ag
 	if err != nil {
 		return nil, err
 	}
-	tool := snapshot.Tool(client.Tool(begin.Msg.GetTool()))
+	tool := client.Tool(begin.Msg.GetTool())
 	files, err := check.ListFiles(tool, f.migrationsDir)
 	if err != nil {
 		return nil, fmt.Errorf("list migrations: %w", err)
@@ -175,11 +175,20 @@ func waitForVerdict(ctx context.Context, c *client.Client, checkID string, timeo
 // unreachable turns transport failures into errUnavailable; other errors,
 // such as a rejected token, stay as they are.
 func unreachable(err error) error {
-	switch connect.CodeOf(err) {
-	case connect.CodeUnavailable, connect.CodeDeadlineExceeded, connect.CodeUnknown, connect.CodeInternal:
+	if isUnreachable(err) {
 		return errUnavailable
 	}
 	return err
+}
+
+// isUnreachable reports whether err means Stratum is down, failing or slow,
+// rather than refusing the request.
+func isUnreachable(err error) bool {
+	switch connect.CodeOf(err) {
+	case connect.CodeUnavailable, connect.CodeDeadlineExceeded, connect.CodeUnknown, connect.CodeInternal:
+		return true
+	}
+	return errors.Is(err, context.DeadlineExceeded)
 }
 
 // pullRequestFiles returns the migration files the pull request adds or
