@@ -99,16 +99,29 @@ func Encode(s *Snapshot) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// MaxDecodedSize bounds a snapshot's size once decompressed. Uploads are
+// capped compressed, and gzip inflates zeros a thousandfold, so without it a
+// small upload could fill the server's memory. A schema with tens of
+// thousands of objects stays well under it.
+const MaxDecodedSize = 256 << 20
+
 // Decode reads a snapshot written by Encode, rejecting formats newer than
-// this code understands.
+// this code understands and snapshots over MaxDecodedSize.
 func Decode(b []byte) (*Snapshot, error) {
+	return decode(b, MaxDecodedSize)
+}
+
+func decode(b []byte, maxSize int64) (*Snapshot, error) {
 	zr, err := gzip.NewReader(bytes.NewReader(b))
 	if err != nil {
 		return nil, fmt.Errorf("decompress snapshot: %w", err)
 	}
-	raw, err := io.ReadAll(zr)
+	raw, err := io.ReadAll(io.LimitReader(zr, maxSize+1))
 	if err != nil {
 		return nil, fmt.Errorf("decompress snapshot: %w", err)
+	}
+	if int64(len(raw)) > maxSize {
+		return nil, fmt.Errorf("snapshot is over %d MiB decompressed", maxSize>>20)
 	}
 	var s Snapshot
 	if err := json.Unmarshal(raw, &s); err != nil {

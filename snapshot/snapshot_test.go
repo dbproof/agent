@@ -1,6 +1,9 @@
 package snapshot
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -47,5 +50,41 @@ func TestDecodeRejectsNewerFormat(t *testing.T) {
 	}
 	if _, err := Decode(b); err == nil || !strings.Contains(err.Error(), "not supported") {
 		t.Fatalf("Decode newer format: err = %v, want not supported", err)
+	}
+}
+
+func TestDecodeRefusesSnapshotsOverTheSizeLimit(t *testing.T) {
+	b, err := Encode(&Snapshot{FormatVersion: FormatVersion, Kind: KindScheduled, Schema: &schema.Schema{ServerVersionNum: 150006}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(b))
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := io.ReadAll(zr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	size := int64(len(raw))
+
+	if _, err := decode(b, size); err != nil {
+		t.Fatalf("a snapshot exactly at the limit: %v", err)
+	}
+	if _, err := decode(b, size-1); err == nil || !strings.Contains(err.Error(), "decompressed") {
+		t.Fatalf("a snapshot one byte over the limit: got %v, want a size error", err)
+	}
+
+	// A gzip bomb: 4 MiB of JSON whitespace compresses to a few KiB.
+	var bomb bytes.Buffer
+	zw := gzip.NewWriter(&bomb)
+	if _, err := zw.Write(bytes.Repeat([]byte(" "), 4<<20)); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := decode(bomb.Bytes(), 1<<20); err == nil || err.Error() != "snapshot is over 1 MiB decompressed" {
+		t.Fatalf("%d compressed bytes that inflate to 4 MiB: got %v", bomb.Len(), err)
 	}
 }
