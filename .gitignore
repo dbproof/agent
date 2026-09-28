@@ -2,3 +2,5 @@
 /dist/
 *.test
 *.out
+# Editor settings are personal.
+/.idea/
