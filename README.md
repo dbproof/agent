@@ -18,3 +18,5 @@ just check   # starts Postgres 13 and 18, lints, runs every test
 ```
 
 `go test -short ./...` skips tests that need Postgres.
+
+Test files follow the source files: `diff_test.go` tests `diff.go`. Tests that need Postgres go in `diff_db_test.go` beside it, and helpers shared by a package's tests in `helpers_test.go`.
