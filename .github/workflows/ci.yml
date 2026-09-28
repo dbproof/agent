@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # buf breaking compares a pull request with its base branch.
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
+      # Tools, codegen, Postgres 13 and 18, buf lint, golangci-lint and every
+      # test, including the round trip and the cross-major diff.
+      - name: just check
+        run: just check
+      - name: Generated code is committed
+        run: git diff --exit-code -- gen
+      # The server supports agents from the last 12 months, so the agent API
+      # can't break them.
+      - name: buf breaking
+        if: github.event_name == 'pull_request'
+        run: bin/buf breaking --against ".git#branch=origin/${{ github.base_ref }}"

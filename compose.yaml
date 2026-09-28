@@ -6,8 +6,16 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     ports: ["54313:5432"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 1s
+      retries: 30
   pg18:
     image: pgvector/pgvector:pg18
     environment:
       POSTGRES_PASSWORD: postgres
     ports: ["54318:5432"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 1s
+      retries: 30
