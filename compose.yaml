@@ -1,5 +1,8 @@
 # Postgres servers for the schema round-trip tests: the oldest and newest supported
 # majors. The newest runs the pgvector image, which pagila.sql needs.
+# Health checks connect over TCP: on first start the image runs a temporary
+# server on the Unix socket only, for initialization, then restarts, so a
+# socket check could pass before the real server is up.
 services:
   pg13:
     image: postgres:13-alpine
@@ -7,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
     ports: ["54313:5432"]
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
       interval: 1s
       retries: 30
   pg18:
@@ -16,6 +19,6 @@ services:
       POSTGRES_PASSWORD: postgres
     ports: ["54318:5432"]
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
       interval: 1s
       retries: 30
