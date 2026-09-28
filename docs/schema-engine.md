@@ -33,6 +33,8 @@ We evaluated two Go libraries in September 2026. Neither meets the requirements 
 
 ## Known limits
 
+- Across a Postgres major upgrade, view definitions aren't compared: 16 stopped qualifying a view's columns with their table, so the same view reads differently. Views added, dropped or changed in any other way still show. Procedure arguments are stored without the IN mode 14 started printing, so they match on every major. TestSameSchemaAcrossMajors captures the test schemas on each major and checks they diff to nothing.
+
 - Not captured: object owners, comments, default privileges, range types, ordered-set aggregates, rules, event triggers, publications, foreign tables and non-partition inheritance (such a child is captured as a standalone table).
 - A column default or domain check that calls a function which itself needs a table can't be restored in one pass.
 - A generation expression can't be changed in place; `ChangeDDL` says so in a comment.

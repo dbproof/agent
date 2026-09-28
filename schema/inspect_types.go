@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"regexp"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -189,6 +190,13 @@ func (in *inspector) functions(ctx context.Context) error {
 			f.Kind = KindFunction
 		}
 		f.Definition = strings.TrimRight(f.Definition, "\n")
+		// Postgres 14 started printing the default IN mode for procedure
+		// arguments, in the identity and the definition's header; without
+		// it both read the same on every major.
+		if args := inMode.ReplaceAllString(f.Args, "$1"); args != f.Args {
+			f.Definition = strings.Replace(f.Definition, "("+f.Args+")", "("+args+")", 1)
+			f.Args = args
+		}
 		oids = append(oids, oid)
 		funcs = append(funcs, f)
 		in.funcID[oid] = f.ID()
@@ -245,3 +253,7 @@ func appendUnique(list []string, s string) []string {
 	}
 	return append(list, s)
 }
+
+// inMode matches an explicit IN mode at the start of an argument. Argument
+// names are lowercase unless quoted, so an uppercase IN is always the mode.
+var inMode = regexp.MustCompile(`(^|, )IN `)

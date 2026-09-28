@@ -70,3 +70,39 @@ func TestDiffDetectsChanges(t *testing.T) {
 		})
 	}
 }
+
+// The same schema captured on different Postgres majors diffs to nothing,
+// so an upgrade isn't drift. Two differences are allowed: they come from
+// creating each database fresh, and pg_upgrade keeps them as they were.
+func TestSameSchemaAcrossMajors(t *testing.T) {
+	servers := pgtest.Servers(t)
+	if len(servers) < 2 {
+		t.Skip("needs two Postgres majors")
+	}
+	fresh := func(c schema.Change) bool {
+		// A new database gets the extension's newest version.
+		if c.Kind == schema.KindExtension && slices.Equal(c.Fields, []string{"version"}) {
+			return true
+		}
+		// Postgres 15 stopped granting CREATE on public to new databases.
+		g := c.Before
+		if g == nil {
+			g = c.After
+		}
+		return c.Kind == schema.KindGrant && g.Grant.Object == "public" && g.Grant.Privilege == "CREATE" && g.Grant.Grantee == "PUBLIC"
+	}
+	for _, name := range []string{"coverage", "billing"} {
+		var snaps []*schema.Schema
+		for _, s := range servers {
+			db := pgtest.NewDB(t, s)
+			pgtest.ExecFile(t, db, "../testdata/schemas/"+name+".sql")
+			snaps = append(snaps, inspect(t, pgtest.CaptureURL(t, db)))
+		}
+		for i := 1; i < len(snaps); i++ {
+			changes := slices.DeleteFunc(schema.Diff(snaps[0], snaps[i], schema.DiffOptions{}), fresh)
+			if len(changes) > 0 {
+				t.Errorf("%s from %s to %s:\n%s", name, servers[0].Name, servers[i].Name, describe(changes))
+			}
+		}
+	}
+}

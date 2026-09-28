@@ -50,3 +50,21 @@ func TestDiffIgnoreTables(t *testing.T) {
 		t.Fatalf("Diff with ignored table = %v, want none", c)
 	}
 }
+
+func TestDiffComparesViewTextOnlyWithinAMajor(t *testing.T) {
+	view := func(major int, def string) *Schema {
+		return &Schema{ServerVersionNum: major * 10000, Views: []View{{Schema: "app", Name: "draft_invoices", Definition: def}}}
+	}
+	qualified := "SELECT invoices.id\n   FROM app.invoices"
+	bare := "SELECT id\n   FROM app.invoices"
+
+	if got := Diff(view(15, qualified), view(15, bare), DiffOptions{}); len(got) != 1 || got[0].Fields[0] != "definition" {
+		t.Errorf("same major: %+v, want the definition change", got)
+	}
+	if got := Diff(view(15, qualified), view(16, bare), DiffOptions{}); len(got) != 0 {
+		t.Errorf("across majors: %+v, want no change", got)
+	}
+	if got := Diff(view(15, qualified), &Schema{ServerVersionNum: 160000}, DiffOptions{}); len(got) != 1 || got[0].Op != OpDrop {
+		t.Errorf("a view dropped across majors: %+v, want the drop", got)
+	}
+}

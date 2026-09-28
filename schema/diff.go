@@ -85,6 +85,10 @@ type DiffOptions struct {
 // compared structurally, by identity, ignoring the order of objects.
 func Diff(a, b *Schema, opts DiffOptions) []Change {
 	a, b = withoutTables(a, opts.IgnoreTables), withoutTables(b, opts.IgnoreTables)
+	// Postgres majors render view definitions differently (16 stopped
+	// qualifying columns with their table), so across an upgrade the text
+	// can't be compared; everything else about a view still is.
+	sameMajor := a.ServerVersionNum/10000 == b.ServerVersionNum/10000
 	d := &differ{}
 
 	diffList(d, KindSchema, a.Namespaces, b.Namespaces, func(n *Namespace) string { return QuoteIdent(n.Name) },
@@ -122,7 +126,7 @@ func Diff(a, b *Schema, opts DiffOptions) []Change {
 	diffList(d, KindView, a.Views, b.Views, (*View).ID, func(v *View) *Object { return &Object{View: v} },
 		func(x, y *View) []string {
 			return fields(map[string]bool{
-				"materialized": x.Materialized != y.Materialized, "definition": x.Definition != y.Definition,
+				"materialized": x.Materialized != y.Materialized, "definition": sameMajor && x.Definition != y.Definition,
 				"options": !slices.Equal(x.Options, y.Options),
 			})
 		})
