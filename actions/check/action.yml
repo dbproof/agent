@@ -1,0 +1,49 @@
+name: Stratum check
+description: Test a pull request's migrations against a snapshot of the production schema.
+inputs:
+  project:
+    description: The Stratum project, org/slug.
+    required: true
+  migrations-dir:
+    description: The migrations folder, relative to the repository root.
+    required: true
+  migrate-command:
+    description: >-
+      Your migrate command. It finds the throwaway database in STRATUM_CHECK_*
+      variables, e.g. flyway -url=$STRATUM_CHECK_JDBC_URL migrate.
+    required: true
+  stratum-url:
+    description: Stratum's address.
+    required: true
+  database:
+    description: postgres:// URL of an empty throwaway database, as a superuser.
+    default: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+  fail-on-unreachable:
+    description: Fail instead of passing with a warning when Stratum is unreachable.
+    default: "false"
+runs:
+  using: composite
+  steps:
+    # The agent builds from this action's own checkout, so the version that
+    # runs is exactly the commit the workflow pins.
+    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: ${{ github.action_path }}/../../go.mod
+        cache-dependency-path: ${{ github.action_path }}/../../go.sum
+    - name: Build the Stratum agent
+      shell: bash
+      env:
+        VERSION: ${{ github.action_ref || 'dev' }}
+      run: go build -C "$GITHUB_ACTION_PATH/../.." -ldflags "-X main.version=$VERSION" -o "$RUNNER_TEMP/stratum" ./cmd/stratum
+    - name: Check migrations
+      shell: bash
+      env:
+        STRATUM_URL: ${{ inputs.stratum-url }}
+        STRATUM_PROJECT: ${{ inputs.project }}
+        STRATUM_CHECK_DSN: ${{ inputs.database }}
+        MIGRATIONS_DIR: ${{ inputs.migrations-dir }}
+        MIGRATE_COMMAND: ${{ inputs.migrate-command }}
+        FAIL_ON_UNREACHABLE: ${{ inputs.fail-on-unreachable }}
+      run: >-
+        "$RUNNER_TEMP/stratum" check -migrations-dir "$MIGRATIONS_DIR"
+        -migrate-command "$MIGRATE_COMMAND" -fail-on-unreachable="$FAIL_ON_UNREACHABLE"

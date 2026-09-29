@@ -4,6 +4,17 @@ The open-source agent that Stratum customers run in their own CI or cluster. It 
 
 Licensed under Apache-2.0 so security teams can audit exactly what runs in their network.
 
+## GitHub Actions
+
+Stratum's setup pull request adds workflows that use two actions from this repository, pinned by commit:
+
+- `actions/check` runs on pull requests: it restores the latest snapshot into the job's throwaway Postgres, applies the pull request's migrations one version at a time with your migrate command, and reports Stratum's verdict. It authenticates with the job's GitHub OIDC token (`permissions: id-token: write`), so pull request workflows hold no Stratum secret.
+- `actions/capture` runs on a schedule and around deploys: it captures the schema and statistics as the `stratum_capture` role and uploads them with the project's capture token. It never fails the job.
+
+Each builds the agent from its own checkout with the Go version in `go.mod`, so what runs is exactly the pinned commit.
+
+While this repository is private, a repository can only use its actions if Settings → Actions → General → Access here allows repositories owned by the same account.
+
 ## Packages
 
 - `schema`: inspects a Postgres schema from `pg_catalog`, diffs two schemas offline and generates DDL.
