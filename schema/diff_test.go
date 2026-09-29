@@ -52,7 +52,7 @@ func TestDiffIgnoreTables(t *testing.T) {
 }
 
 func TestDiffComparesViewTextOnlyWithinAMajor(t *testing.T) {
-	view := func(major int, def string) *Schema {
+	view := func(major int32, def string) *Schema {
 		return &Schema{ServerVersionNum: major * 10000, Views: []View{{Schema: "app", Name: "draft_invoices", Definition: def}}}
 	}
 	qualified := "SELECT invoices.id\n   FROM app.invoices"

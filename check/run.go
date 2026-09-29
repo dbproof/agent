@@ -91,7 +91,7 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	r := &Report{}
 	done := func() *Report { r.Duration = time.Since(start); return r }
 
-	var major int
+	var major int32
 	if err := cfg.Conn.QueryRow(ctx, "SELECT current_setting('server_version_num')::int / 10000").Scan(&major); err != nil {
 		return nil, fmt.Errorf("read server version: %w", err)
 	}

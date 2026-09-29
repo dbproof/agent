@@ -29,7 +29,7 @@ const (
 
 // Snapshot is one capture of a production database.
 type Snapshot struct {
-	FormatVersion int            `json:"format_version"`
+	FormatVersion int32          `json:"format_version"`
 	CapturedAt    time.Time      `json:"captured_at"`
 	Kind          Kind           `json:"kind"`
 	AgentVersion  string         `json:"agent_version"`

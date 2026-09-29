@@ -101,7 +101,7 @@ func extFilter(catalog, oidExpr string) string {
 }
 
 func (in *inspector) version(ctx context.Context) error {
-	var num int
+	var num int32
 	if err := in.tx.QueryRow(ctx, "SELECT current_setting('server_version_num')::int").Scan(&num); err != nil {
 		return err
 	}

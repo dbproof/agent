@@ -11,7 +11,7 @@ package schema
 // by identity so that encoding the same schema twice gives the same bytes.
 type Schema struct {
 	// ServerVersionNum is the server's server_version_num, e.g. 150006.
-	ServerVersionNum int         `json:"server_version_num"`
+	ServerVersionNum int32       `json:"server_version_num"`
 	Extensions       []Extension `json:"extensions,omitempty"`
 	Namespaces       []Namespace `json:"namespaces,omitempty"`
 	// Roles lists the role names that grants and policies reference. Restores
@@ -30,7 +30,7 @@ type Schema struct {
 }
 
 // Major returns the Postgres major version, e.g. 15.
-func (s *Schema) Major() int { return s.ServerVersionNum / 10000 }
+func (s *Schema) Major() int32 { return s.ServerVersionNum / 10000 }
 
 type Extension struct {
 	Name    string `json:"name"`

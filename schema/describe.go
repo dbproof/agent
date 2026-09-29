@@ -10,7 +10,7 @@ import (
 type Line struct {
 	Op     string `json:"op"`
 	Text   string `json:"text"`
-	Indent int    `json:"indent,omitempty"`
+	Indent int32  `json:"indent,omitempty"`
 }
 
 // Describe renders changes the way people read them: changes inside a table
