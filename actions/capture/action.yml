@@ -19,15 +19,19 @@ inputs:
 runs:
   using: composite
   steps:
+    # setup-go's cache takes no ".." in paths, so name the agent's root.
+    - name: Find the agent
+      shell: bash
+      run: echo "STRATUM_AGENT_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
     - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
-        go-version-file: ${{ github.action_path }}/../../go.mod
-        cache-dependency-path: ${{ github.action_path }}/../../go.sum
+        go-version-file: ${{ env.STRATUM_AGENT_ROOT }}/go.mod
+        cache-dependency-path: ${{ env.STRATUM_AGENT_ROOT }}/go.sum
     - name: Build the Stratum agent
       shell: bash
       env:
         VERSION: ${{ github.action_ref || 'dev' }}
-      run: go build -C "$GITHUB_ACTION_PATH/../.." -ldflags "-X main.version=$VERSION" -o "$RUNNER_TEMP/stratum" ./cmd/stratum
+      run: go build -C "$STRATUM_AGENT_ROOT" -ldflags "-X main.version=$VERSION" -o "$RUNNER_TEMP/stratum" ./cmd/stratum
     # Capture never fails the job: a capture that can't run must not stop a
     # deploy. The agent says what went wrong as a warning.
     - name: Capture the schema
