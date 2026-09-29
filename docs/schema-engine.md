@@ -17,7 +17,7 @@ We evaluated two Go libraries in September 2026. Neither meets the requirements 
 
 ## Requirements
 
-- **Catalog only.** Inspection reads `pg_catalog` and nothing else, so the capture role needs no privileges on application tables and never sees a row. Statistics are separate: they come through the `stratum.table_stats()` security-definer function.
+- **Catalog only.** Inspection reads `pg_catalog` and nothing else, so it never sees a row. Statistics are separate: capture reads the planner's estimates from `pg_stats` (null fraction, distinct count, average width) and row counts from `pg_class`, and never its value samples.
 - **Offline diff.** The server diffs stored snapshots, so `Diff` compares two `Schema` values without a database.
 - **Faithful restore.** A check restores the snapshot into an empty database. `RestoreDDL` must reproduce the schema exactly; the round-trip test proves it.
 - **Every supported major.** Postgres 13 through 18.

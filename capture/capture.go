@@ -50,11 +50,7 @@ func Run(ctx context.Context, conn *pgx.Conn, cfg Config) (*snapshot.Snapshot, e
 			return nil, err
 		}
 	}
-	var role string
-	if err := conn.QueryRow(ctx, "SELECT current_user").Scan(&role); err != nil {
-		return nil, fmt.Errorf("read current role: %w", err)
-	}
-	s, err := schema.Inspect(ctx, conn, schema.Options{Exclude: cfg.Exclude, IgnoreGrantees: []string{role}})
+	s, err := schema.Inspect(ctx, conn, schema.Options{Exclude: cfg.Exclude})
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +74,29 @@ func Run(ctx context.Context, conn *pgx.Conn, cfg Config) (*snapshot.Snapshot, e
 	}, nil
 }
 
-// readStats calls stratum.table_stats(), the security-definer function the
-// setup script creates. It returns only estimates, never values, and only for
-// tables the inspection kept.
+// statsQuery reads the planner's estimates: each table's row count, and for
+// each column its null fraction, distinct count and average width. It never
+// selects pg_stats' value samples, most_common_vals or histogram_bounds, and
+// pg_stats itself shows only the columns the role may read, so a table it
+// can't read keeps its row count and has no column statistics.
+const statsQuery = `
+	SELECT DISTINCT ON (n.nspname, c.relname, s.attname)
+	       n.nspname::text, c.relname::text, c.reltuples::float8, s.attname::text,
+	       s.null_frac::float8, s.n_distinct::float8, s.avg_width
+	FROM pg_catalog.pg_class c
+	JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+	LEFT JOIN pg_catalog.pg_stats s ON s.schemaname = n.nspname AND s.tablename = c.relname
+	WHERE c.relkind IN ('r', 'p', 'm')
+	  AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+	  AND n.nspname NOT LIKE 'pg\_%'
+	ORDER BY n.nspname, c.relname, s.attname, s.inherited`
+
+// readStats reads the planner's estimates for the tables the inspection
+// kept: never values.
 func readStats(ctx context.Context, conn *pgx.Conn, s *schema.Schema) ([]snapshot.TableStats, error) {
-	rows, err := conn.Query(ctx, "SELECT schema_name, table_name, n_rows, column_name, null_frac, n_distinct, avg_width FROM stratum.table_stats()")
+	rows, err := conn.Query(ctx, statsQuery)
 	if err != nil {
-		return nil, fmt.Errorf("read statistics (did the DBA run the setup script?): %w", err)
+		return nil, fmt.Errorf("read statistics: %w", err)
 	}
 	byTable := map[string]*snapshot.TableStats{}
 	var order []string

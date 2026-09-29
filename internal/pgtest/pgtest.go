@@ -16,8 +16,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// CaptureRole is a login role with no privileges beyond the defaults, like the
-// role customers create for Stratum's capture.
+// CaptureRole is a login role with no privileges beyond the defaults, for
+// tests of what capture sees without reading the application's tables.
 const CaptureRole = "stratum_capture"
 
 // Server is one Postgres server to test against.

@@ -11,63 +11,36 @@ import (
 	"github.com/borovikovd/stratum-agent/snapshot"
 )
 
-// setup runs the DBA setup script, minus CREATE ROLE: roles are cluster-wide,
-// so pgtest creates the capture role once for every test database.
-func setup(t *testing.T, db string, tool snapshot.Tool) {
+// seed fills billing with history and rows, and gathers statistics.
+func seed(t *testing.T, db string) {
 	t.Helper()
-	sql, err := capture.SetupSQL(tool, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var kept []string
-	for _, line := range strings.Split(sql, "\n") {
-		if !strings.HasPrefix(line, "CREATE ROLE") {
-			kept = append(kept, line)
-		}
-	}
-	pgtest.CaptureURL(t, db)
-	pgtest.Exec(t, db, strings.Join(kept, "\n"))
+	pgtest.ExecFile(t, db, "../testdata/schemas/billing.sql")
+	pgtest.Exec(t, db, `
+		INSERT INTO flyway_schema_history VALUES
+		  (1, '1', 'init', 'SQL', 'V1__init.sql', 123, 'deploy', now(), 10, true),
+		  (2, '2', 'payments', 'SQL', 'V2__payments.sql', 456, 'deploy', now(), 10, true),
+		  (3, '3', 'broken', 'SQL', 'V3__broken.sql', 789, 'deploy', now(), 10, false);
+		INSERT INTO customers (name, email) SELECT 'c' || i, i || '@example.com' FROM generate_series(1, 200) i;
+		INSERT INTO invoices (customer_id, number, amount_cents, due_date)
+		  SELECT 1 + i % 200, 'INV-' || i, 100, CASE WHEN i % 4 = 0 THEN NULL ELSE current_date END
+		  FROM generate_series(1, 1000) i;
+		ANALYZE;`)
 }
 
-func TestCaptureAsTheCaptureRole(t *testing.T) {
+// Capture runs as the role migrations run as, which owns the tables: the
+// schema, each table's statistics and the migration history.
+func TestCaptureAsTheMigrationRole(t *testing.T) {
 	for _, server := range pgtest.Servers(t) {
 		t.Run(server.Name, func(t *testing.T) {
 			db := pgtest.NewDB(t, server)
-			pgtest.ExecFile(t, db, "../testdata/schemas/billing.sql")
-			pgtest.Exec(t, db, `
-				INSERT INTO flyway_schema_history VALUES
-				  (1, '1', 'init', 'SQL', 'V1__init.sql', 123, 'deploy', now(), 10, true),
-				  (2, '2', 'payments', 'SQL', 'V2__payments.sql', 456, 'deploy', now(), 10, true),
-				  (3, '3', 'broken', 'SQL', 'V3__broken.sql', 789, 'deploy', now(), 10, false);
-				INSERT INTO customers (name, email) SELECT 'c' || i, i || '@example.com' FROM generate_series(1, 200) i;
-				INSERT INTO invoices (customer_id, number, amount_cents, due_date)
-				  SELECT 1 + i % 200, 'INV-' || i, 100, CASE WHEN i % 4 = 0 THEN NULL ELSE current_date END
-				  FROM generate_series(1, 1000) i;
-				ANALYZE;`)
-			setup(t, db, snapshot.ToolFlyway)
+			seed(t, db)
 
-			conn := pgtest.Connect(t, pgtest.CaptureURL(t, db))
-			// The capture role can't read application rows.
-			if _, err := conn.Exec(context.Background(), "SELECT * FROM invoices LIMIT 1"); err == nil {
-				t.Fatal("the capture role could read invoices")
-			}
-
-			snap, err := capture.Run(context.Background(), conn, capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway})
+			snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway})
 			if err != nil {
 				t.Fatal(err)
 			}
 			if snap.Schema.Table("public.invoices") == nil {
 				t.Fatal("invoices missing from the schema")
-			}
-			for _, n := range snap.Schema.Namespaces {
-				if n.Name == "stratum" {
-					t.Error("Stratum's own schema was captured")
-				}
-			}
-			for _, g := range snap.Schema.Grants {
-				if g.Grantee == pgtest.CaptureRole {
-					t.Errorf("the capture role's own grant was captured: %+v", g)
-				}
 			}
 
 			invoices := findStats(snap, "public.invoices")
@@ -94,12 +67,36 @@ func TestCaptureAsTheCaptureRole(t *testing.T) {
 	}
 }
 
+// A role that can read the history but not the application's tables still
+// captures the whole schema and every table's row count; only the column
+// statistics of tables it can't read are missing.
+func TestCaptureWithoutReadingTheTables(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	db := pgtest.NewDB(t, server)
+	seed(t, db)
+	reader := pgtest.CaptureURL(t, db)
+	pgtest.Exec(t, db, "GRANT SELECT ON flyway_schema_history TO "+pgtest.CaptureRole)
+
+	snap, err := capture.Run(context.Background(), pgtest.Connect(t, reader), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snap.Schema.Table("public.invoices") == nil {
+		t.Fatal("invoices missing from the schema")
+	}
+	if invoices := findStats(snap, "public.invoices"); invoices == nil || invoices.Rows != 1000 || len(invoices.Columns) != 0 {
+		t.Fatalf("invoices stats = %+v, want its row count and no column statistics", invoices)
+	}
+	if got := capture.Applied(snap.History); !slices.Equal(got, []string{"1", "2"}) {
+		t.Fatalf("Applied = %v", got)
+	}
+}
+
 func TestPostDeployCaptureWaitsForTheDeployedVersion(t *testing.T) {
 	server := pgtest.Servers(t)[0]
 	db := pgtest.NewDB(t, server)
 	pgtest.ExecFile(t, db, "../testdata/schemas/billing.sql")
-	setup(t, db, snapshot.ToolFlyway)
-	conn := pgtest.Connect(t, pgtest.CaptureURL(t, db))
+	conn := pgtest.Connect(t, db)
 
 	cfg := capture.Config{Kind: snapshot.KindPostDeploy, Tool: snapshot.ToolFlyway, ExpectVersion: "7", WaitTimeout: 1}
 	if _, err := capture.Run(context.Background(), conn, cfg); err == nil || !strings.Contains(err.Error(), "didn't appear") {
@@ -131,7 +128,6 @@ func TestCaptureReadsOnlyTheHistoryTable(t *testing.T) {
 		ALTER TABLE flyway_schema_history ADD COLUMN note text;
 		INSERT INTO flyway_schema_history VALUES (1, '1', 'init', 'SQL', 'V1__init.sql', 123, 'deploy', now(), 10, true, 'private');
 		INSERT INTO customers (name, email) VALUES ('Ada', 'ada@example.com');`)
-	setup(t, db, snapshot.ToolFlyway)
 	owner := pgtest.Connect(t, db)
 	ctx := context.Background()
 

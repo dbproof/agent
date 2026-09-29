@@ -11,7 +11,7 @@ inputs:
     description: The project's upload-only capture token.
     required: true
   capture-dsn:
-    description: Connection string for the stratum_capture role.
+    description: Connection string for a role that can read the migration history, such as the one your migrations run as.
     required: true
   expect-version:
     description: Post-deploy, the migration version to wait for in the history.

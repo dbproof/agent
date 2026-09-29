@@ -41,7 +41,8 @@ func runCapture(args []string) int {
 Environment:
   STRATUM_URL            Stratum's address
   STRATUM_CAPTURE_TOKEN  the project's upload-only capture token
-  STRATUM_CAPTURE_DSN    connection string for the stratum_capture role
+  STRATUM_CAPTURE_DSN    connection string for a role that can read the migration
+                         history, such as the one your migrations run as
 
 Flags:`)
 		fs.PrintDefaults()

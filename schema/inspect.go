@@ -8,17 +8,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// StratumSchema holds Stratum's own objects in a customer database: the
-// statistics function. Inspection never reports it.
-const StratumSchema = "stratum"
-
 // Options controls what Inspect reports.
 type Options struct {
 	// Exclude holds patterns of the form "schema.*" or "schema.table". An
 	// excluded relation takes everything that depends on it with it.
 	Exclude []string
-	// IgnoreGrantees lists roles whose grants are left out, such as the
-	// capture role itself.
+	// IgnoreGrantees lists roles whose grants are left out, such as a test
+	// harness's own role.
 	IgnoreGrantees []string
 }
 
@@ -116,9 +112,9 @@ func (in *inspector) version(ctx context.Context) error {
 func (in *inspector) namespaces(ctx context.Context) error {
 	rows, err := in.tx.Query(ctx, `
 		SELECT n.nspname FROM pg_catalog.pg_namespace n
-		WHERE n.nspname NOT IN ('pg_catalog', 'information_schema', $1)
+		WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
 		  AND n.nspname !~ '^pg_(toast|temp_|toast_temp_)'
-		  AND `+extFilter("pg_namespace", "n.oid"), StratumSchema)
+		  AND `+extFilter("pg_namespace", "n.oid"))
 	if err != nil {
 		return err
 	}
