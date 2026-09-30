@@ -147,7 +147,8 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	}
 
 	current := cfg.Snapshot.Schema
-	failed := false
+	// failed is the version that failed to apply.
+	failed := ""
 	for _, group := range []struct {
 		name       string
 		migrations []Migration
@@ -156,7 +157,8 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 		{"Applied pull request migrations", pr},
 	} {
 		stepStart = time.Now()
-		if failed {
+		if failed != "" {
+			r.Migrations = append(r.Migrations, group.migrations...)
 			r.step(group.name, "Skipped after a failure", StatusSkipped, stepStart)
 			continue
 		}
@@ -179,7 +181,10 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 			}
 			r.Migrations = append(r.Migrations, *m)
 			if !m.Applied {
-				failed = true
+				// The rest aren't attempted, but still name the pull
+				// request's versions.
+				r.Migrations = append(r.Migrations, group.migrations[i+1:]...)
+				failed = m.Version
 				break
 			}
 			current = next
@@ -190,9 +195,8 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 		}
 		detail := strings.Join(versions, ", ") + " · " + cfg.MigratorName
 		status := StatusOK
-		if failed {
-			last := r.Migrations[len(r.Migrations)-1]
-			detail, status = "V"+last.Version+" failed", StatusFailed
+		if failed != "" {
+			detail, status = "V"+failed+" failed", StatusFailed
 		}
 		r.step(group.name, detail, status, stepStart)
 	}

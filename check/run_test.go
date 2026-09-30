@@ -170,12 +170,33 @@ func TestCheckReportsAFailedMigration(t *testing.T) {
 		"V5__after_fail.sql": "SELECT 1;",
 	}))
 	r := runCheck(t, server, snap, dir, files, "V4__add_email.sql", "V5__after_fail.sql")
-	if len(r.Migrations) != 1 || r.Migrations[0].Applied || r.Migrations[0].Error == "" {
+	if len(r.Migrations) != 2 || r.Migrations[0].Applied || r.Migrations[0].Error == "" || r.Migrations[1].Applied || r.Migrations[1].Error != "" {
 		t.Fatalf("migrations = %+v, want V4 failed and V5 not attempted", r.Migrations)
 	}
 	last := r.Steps[len(r.Steps)-1]
 	if last.Status != check.StatusFailed || last.Detail != "V4 failed" {
 		t.Fatalf("last step = %+v", last)
+	}
+}
+
+// A migration the check never reached still names the pull request's
+// versions, which the server compares with other open pull requests'.
+func TestCheckReportsMigrationsAfterAFailure(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	snap := production(t, server)
+	dir, files := writeFiles(t, with(map[string]string{
+		"V4__add_email.sql":       "ALTER TABLE customers ADD COLUMN email text;",
+		"V5__customer_tax_id.sql": "ALTER TABLE customers ADD COLUMN tax_id varchar(32);",
+		"V6__index_tax_id.sql":    "CREATE INDEX customers_tax_id_idx ON customers (tax_id);",
+	}))
+	r := runCheck(t, server, snap, dir, files, "V5__customer_tax_id.sql", "V6__index_tax_id.sql")
+	var got []string
+	for _, m := range r.Migrations {
+		got = append(got, fmt.Sprintf("V%s pr=%v applied=%v failed=%v", m.Version, m.FromPullRequest, m.Applied, m.Error != ""))
+	}
+	want := []string{"V4 pr=false applied=false failed=true", "V5 pr=true applied=false failed=false", "V6 pr=true applied=false failed=false"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("migrations = %q, want %q", got, want)
 	}
 }
 
