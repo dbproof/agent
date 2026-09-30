@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"reflect"
 	"slices"
+	"strings"
 )
 
 // Op is what happened to an object between two schemas.
@@ -52,6 +53,9 @@ type Change struct {
 	Fields []string `json:"fields,omitempty"`
 	Before *Object  `json:"before,omitempty"`
 	After  *Object  `json:"after,omitempty"`
+	// Keep lists what recreating a view takes with it and must come back,
+	// unchanged on both sides: a materialized view's indexes, a view's grants.
+	Keep []Object `json:"keep,omitempty"`
 }
 
 // Object holds exactly one schema object.
@@ -130,6 +134,11 @@ func Diff(a, b *Schema, opts DiffOptions) []Change {
 				"options": !slices.Equal(x.Options, y.Options),
 			})
 		})
+	for i, c := range d.changes {
+		if c.Kind == KindView && c.Op == OpAlter {
+			d.changes[i].Keep = kept(a, b, c.ID)
+		}
+	}
 	diffList(d, KindFunc, a.Functions, b.Functions, (*Function).ID, func(f *Function) *Object { return &Object{Function: f} },
 		func(x, y *Function) []string {
 			return fields(map[string]bool{"kind": x.Kind != y.Kind, "definition": x.Definition != y.Definition})
@@ -190,6 +199,31 @@ func (d *differ) tables(a, b *Schema) {
 		for j := start; j < len(d.changes); j++ {
 			d.changes[j].Table = after.ID()
 		}
+	}
+	d.changes = slices.DeleteFunc(d.changes, inheritedFrom(b, d.changes))
+}
+
+// inheritedFrom reports the column changes a partition inherits: its parent
+// made the same change, which Postgres applies to every partition.
+func inheritedFrom(b *Schema, changes []Change) func(Change) bool {
+	type key struct {
+		op     Op
+		id     string
+		fields string
+	}
+	made := map[key]bool{}
+	for _, c := range changes {
+		if c.Kind == KindColumn {
+			made[key{c.Op, c.ID, strings.Join(c.Fields, ",")}] = true
+		}
+	}
+	return func(c Change) bool {
+		t := b.Table(c.Table)
+		if c.Kind != KindColumn || t == nil || t.PartitionOf == "" {
+			return false
+		}
+		_, name, _ := cutLast(c.ID)
+		return made[key{c.Op, t.PartitionOf + "." + name, strings.Join(c.Fields, ",")}]
 	}
 }
 
@@ -276,4 +310,26 @@ func withoutTables(s *Schema, ids []string) *Schema {
 		return skip[t]
 	})
 	return &c
+}
+
+// kept lists the indexes and grants on relation id that a and b share.
+func kept(a, b *Schema, id string) []Object {
+	var out []Object
+	for i := range b.Indexes {
+		x := &b.Indexes[i]
+		if x.Table == id && slices.ContainsFunc(a.Indexes, func(y Index) bool { return reflect.DeepEqual(*x, y) }) {
+			out = append(out, Object{Index: x})
+		}
+	}
+	for i := range b.Grants {
+		g := &b.Grants[i]
+		on := g.Object
+		if g.ObjectKind == ObjectColumn {
+			on, _, _ = cutLast(on)
+		}
+		if on == id && slices.Contains(a.Grants, *g) {
+			out = append(out, Object{Grant: g})
+		}
+	}
+	return out
 }

@@ -28,7 +28,7 @@ func ChangeDDL(changes []Change, opts DDLOptions) []string {
 		}
 	}
 	var drops, rest []Change
-	dropped := droppedRelations(cs)
+	dropped := droppedObjects(cs)
 	for _, c := range cs {
 		switch {
 		case c.Op != OpDrop:
@@ -39,35 +39,87 @@ func ChangeDDL(changes []Change, opts DDLOptions) []string {
 	}
 	slices.SortStableFunc(drops, func(a, b Change) int { return cmp.Compare(ddlRank(b), ddlRank(a)) })
 	slices.SortStableFunc(rest, func(a, b Change) int { return cmp.Compare(ddlRank(a), ddlRank(b)) })
+	drops = topoSort(drops, changeID, dependents(drops))
+	rest = topoSort(rest, changeID, dependencies)
 
 	g := ddlGen{guarded: opts.Guarded}
-	var out []string
+	// late runs last: a sequence can only be owned by a column once the
+	// column exists, and can only be dropped once no column default uses it.
+	var out, late []string
+	for _, c := range rest {
+		// An identity column's sequence goes with the identity, freeing its
+		// name for a serial column's sequence added below.
+		if c.Kind == KindColumn && c.Op == OpAlter && c.Before.Column.Identity != "" && c.After.Column.Identity == "" {
+			out = append(out, "ALTER TABLE "+c.Table+" ALTER COLUMN "+QuoteIdent(c.After.Column.Name)+" DROP IDENTITY"+map[bool]string{true: " IF EXISTS"}[g.guarded])
+		}
+	}
 	for _, c := range drops {
-		out = append(out, g.drop(c)...)
+		if c.Kind == KindSequence {
+			late = append(late, g.drop(c)...)
+		} else {
+			out = append(out, g.drop(c)...)
+		}
 	}
 	for _, c := range rest {
-		if c.Op == OpAdd {
+		switch {
+		case c.Op == OpAdd && c.Kind == KindSequence && c.After.Sequence.OwnedBy != "":
 			out = append(out, g.add(c)...)
-		} else {
+			late = append(late, "ALTER SEQUENCE "+c.ID+" OWNED BY "+c.After.Sequence.OwnedBy)
+		case c.Op == OpAdd:
+			out = append(out, g.add(c)...)
+		default:
 			out = append(out, g.alter(c)...)
 		}
 	}
-	return out
+	return append(out, late...)
 }
 
-// droppedRelations returns the identities of tables and views being dropped.
-func droppedRelations(cs []Change) map[string]bool {
+func changeID(c *Change) string { return c.ID }
+
+// dependencies lists what a change's object needs to exist first: the
+// relations and functions a view, function or type uses, and the relation
+// an index is on.
+func dependencies(c *Change) []string {
+	o := c.object()
+	switch {
+	case o.View != nil:
+		return o.View.DependsOn
+	case o.Function != nil:
+		return o.Function.DependsOn
+	case o.Type != nil:
+		return o.Type.DependsOn
+	case o.Index != nil:
+		return []string{o.Index.Table}
+	}
+	return nil
+}
+
+// dependents inverts dependencies over cs, so drops run dependents first.
+func dependents(cs []Change) func(*Change) []string {
+	of := map[string][]string{}
+	for i := range cs {
+		for _, d := range dependencies(&cs[i]) {
+			of[d] = append(of[d], cs[i].ID)
+		}
+	}
+	return func(c *Change) []string { return of[c.ID] }
+}
+
+// droppedObjects returns the identities of tables, views and columns being
+// dropped.
+func droppedObjects(cs []Change) map[string]bool {
 	dropped := map[string]bool{}
 	for _, c := range cs {
-		if c.Op == OpDrop && (c.Kind == KindTable || c.Kind == KindView) {
+		if c.Op == OpDrop && (c.Kind == KindTable || c.Kind == KindView || c.Kind == KindColumn) {
 			dropped[c.ID] = true
 		}
 	}
 	return dropped
 }
 
-// impliedDrop reports whether dropping a relation already drops this object:
-// its indexes, constraints, triggers, policies, grants and owned sequences.
+// impliedDrop reports whether dropping a relation or column already drops
+// this object: its indexes, constraints, triggers, policies, grants and owned
+// sequences.
 func impliedDrop(c Change, dropped map[string]bool) bool {
 	if dropped[c.Table] {
 		return true
@@ -81,7 +133,7 @@ func impliedDrop(c Change, dropped map[string]bool) bool {
 		return dropped[o.Grant.Object]
 	case o.Sequence != nil && o.Sequence.OwnedBy != "":
 		table, _, _ := cutLast(o.Sequence.OwnedBy)
-		return dropped[table]
+		return dropped[table] || dropped[o.Sequence.OwnedBy]
 	}
 	return false
 }
@@ -105,8 +157,13 @@ func ddlRank(c Change) int {
 		KindConstraint, KindIndex, "foreign_key", KindView, KindTrigger, KindPolicy, KindGrant,
 	}
 	k := c.Kind
-	if o := c.object(); o != nil && o.Constraint != nil && o.Constraint.Type == ConstraintForeignKey {
+	o := c.object()
+	switch {
+	case o.Constraint != nil && o.Constraint.Type == ConstraintForeignKey:
 		k = "foreign_key"
+	case o.Function != nil && len(o.Function.DependsOn) > 0:
+		// Like RestoreDDL: a function that uses relations comes with the views.
+		k = KindView
 	}
 	return slices.Index(order, k)
 }
@@ -137,12 +194,8 @@ func (g ddlGen) add(c Change) []string {
 		}
 		return out
 	case KindSequence:
-		s := *o.Sequence
-		out := []string{strings.Replace(createSequenceSQL(s), "CREATE SEQUENCE ", "CREATE SEQUENCE "+ifNotExistsSQL(g.guarded), 1)}
-		if s.OwnedBy != "" {
-			out = append(out, "ALTER SEQUENCE "+s.ID()+" OWNED BY "+s.OwnedBy)
-		}
-		return out
+		// ChangeDDL sets OWNED BY last, once the owning column exists.
+		return []string{strings.Replace(createSequenceSQL(*o.Sequence), "CREATE SEQUENCE ", "CREATE SEQUENCE "+ifNotExistsSQL(g.guarded), 1)}
 	case KindTable:
 		stmts := createTableSQL(*o.Table, nil)
 		stmts[0] = strings.Replace(stmts[0], "TABLE ", "TABLE "+ifNotExistsSQL(g.guarded), 1)
@@ -150,7 +203,12 @@ func (g ddlGen) add(c Change) []string {
 	case KindColumn:
 		return []string{"ALTER TABLE " + c.Table + " ADD COLUMN " + ifNotExistsSQL(g.guarded) + columnSQL(*o.Column)}
 	case KindConstraint:
-		return []string{addConstraintSQL(*o.Constraint)}
+		con := *o.Constraint
+		if g.guarded {
+			return []string{unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_constraint WHERE conrelid = %s::regclass AND conname = %s",
+				QuoteLiteral(con.Table), QuoteLiteral(con.Name)), addConstraintSQL(con))}
+		}
+		return []string{addConstraintSQL(con)}
 	case KindIndex:
 		def := o.Index.Definition
 		if g.guarded {
@@ -158,7 +216,8 @@ func (g ddlGen) add(c Change) []string {
 		}
 		return []string{def}
 	case KindView:
-		return []string{createViewSQL(*o.View, g.guarded)}
+		// Unlike a restore, a change runs where the data is: fill the view.
+		return []string{strings.TrimSuffix(createViewSQL(*o.View, g.guarded), "\nWITH NO DATA")}
 	case KindFunc:
 		return []string{o.Function.Definition}
 	case KindTrigger:
@@ -186,7 +245,15 @@ func (g ddlGen) drop(c Change) []string {
 		}
 		return []string{"DROP " + kind + ie + o.Type.ID()}
 	case KindSequence:
-		return []string{"DROP SEQUENCE " + ie + o.Sequence.ID()}
+		id := o.Sequence.ID()
+		if g.guarded {
+			// An identity column's own sequence may have taken the name, as
+			// when a serial column turns identity.
+			return []string{when(fmt.Sprintf("EXISTS (SELECT FROM pg_catalog.pg_class s WHERE s.oid = to_regclass(%s) AND NOT EXISTS "+
+				"(SELECT FROM pg_catalog.pg_depend d WHERE d.classid = 'pg_catalog.pg_class'::regclass AND d.objid = s.oid AND d.deptype = 'i'))",
+				QuoteLiteral(id)), "DROP SEQUENCE "+id)}
+		}
+		return []string{"DROP SEQUENCE " + id}
 	case KindTable:
 		return []string{"DROP TABLE " + ie + o.Table.ID()}
 	case KindColumn:
@@ -231,12 +298,28 @@ func (g ddlGen) alter(c Change) []string {
 	case KindTable:
 		return alterTableSQL(*c.Before.Table, *c.After.Table)
 	case KindColumn:
-		return alterColumnSQL(c.Table, *c.Before.Column, *c.After.Column)
+		return g.alterColumnSQL(c.Table, *c.Before.Column, *c.After.Column)
 	case KindView:
+		var out []string
 		if c.Before.View.Materialized || c.After.View.Materialized {
-			return g.recreate(c)
+			out = g.recreate(c)
+		} else {
+			// CREATE OR REPLACE can't remove, rename or retype a view's columns
+			// (invalid_table_definition); only then does the view go and come back.
+			v := *c.After.View
+			out = []string{"DO $dbproof$ BEGIN " + createViewSQL(v, true) + "; EXCEPTION WHEN invalid_table_definition THEN DROP VIEW " + v.ID() + "; " +
+				createViewSQL(v, false) + "; END $dbproof$"}
 		}
-		return []string{createViewSQL(*c.After.View, true)}
+		// The kept objects may have survived (CREATE OR REPLACE), so add them
+		// guarded.
+		for _, k := range c.Keep {
+			kind := KindIndex
+			if k.Grant != nil {
+				kind = KindGrant
+			}
+			out = append(out, ddlGen{guarded: true}.add(Change{Op: OpAdd, Kind: kind, After: &k})...)
+		}
+		return out
 	case KindFunc:
 		if c.Before.Function.Kind != c.After.Function.Kind || c.After.Function.Kind == KindAggregate {
 			return g.recreate(c)
@@ -282,6 +365,9 @@ func (g ddlGen) alterType(c Change) []string {
 			stmt := "ALTER TYPE " + id + " ADD VALUE " + ifNotExistsSQL(g.guarded) + QuoteLiteral(l)
 			if i > 0 {
 				stmt += " AFTER " + QuoteLiteral(after.Labels[i-1])
+			} else if j := slices.IndexFunc(after.Labels, func(l string) bool { return slices.Contains(before.Labels, l) }); j >= 0 {
+				// Without a position Postgres appends the label.
+				stmt += " BEFORE " + QuoteLiteral(after.Labels[j])
 			}
 			out = append(out, stmt)
 		}
@@ -402,14 +488,11 @@ func alterTableSQL(before, after Table) []string {
 	return out
 }
 
-func alterColumnSQL(table string, before, after Column) []string {
+func (g ddlGen) alterColumnSQL(table string, before, after Column) []string {
 	col := "ALTER TABLE " + table + " ALTER COLUMN " + QuoteIdent(after.Name)
 	var out []string
 	if before.Generated != after.Generated || (after.Generated != "" && before.Default != after.Default) {
 		return []string{fmt.Sprintf("-- The generation expression of %s.%s changed; drop and re-add the column to change it", table, QuoteIdent(after.Name))}
-	}
-	if before.Identity != "" && after.Identity == "" {
-		out = append(out, col+" DROP IDENTITY")
 	}
 	if before.Type != after.Type || before.Collation != after.Collation {
 		stmt := col + " TYPE " + after.Type
@@ -418,7 +501,8 @@ func alterColumnSQL(table string, before, after Column) []string {
 		}
 		out = append(out, stmt)
 	}
-	if after.Identity == "" && before.Default != after.Default {
+	toIdentity := before.Identity == "" && after.Identity != ""
+	if before.Default != after.Default && !toIdentity {
 		if after.Default == "" {
 			out = append(out, col+" DROP DEFAULT")
 		} else {
@@ -429,8 +513,18 @@ func alterColumnSQL(table string, before, after Column) []string {
 		out = append(out, col+map[bool]string{true: " SET NOT NULL", false: " DROP NOT NULL"}[after.NotNull])
 	}
 	switch {
-	case before.Identity == "" && after.Identity != "":
-		out = append(out, col+" ADD GENERATED "+strings.ToUpper(after.Identity)+" AS IDENTITY")
+	case toIdentity:
+		// An identity column has no default: a serial column drops its
+		// nextval default first.
+		stmt := col + " ADD GENERATED " + strings.ToUpper(after.Identity) + " AS IDENTITY"
+		if before.Default != "" {
+			stmt = col + " DROP DEFAULT; " + stmt
+		}
+		if g.guarded {
+			stmt = unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_attribute WHERE attrelid = %s::regclass AND attname = %s AND attidentity <> ''",
+				QuoteLiteral(table), QuoteLiteral(after.Name)), stmt)
+		}
+		out = append(out, stmt)
 	case before.Identity != "" && after.Identity != "" && before.Identity != after.Identity:
 		out = append(out, col+" SET GENERATED "+strings.ToUpper(after.Identity))
 	}

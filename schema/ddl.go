@@ -248,6 +248,17 @@ func revokeSQL(g Grant) string {
 	return fmt.Sprintf("REVOKE %s ON %s FROM %s", priv, target, roleSQL(g.Grantee))
 }
 
+// when runs stmt only if cond holds, for guards Postgres has no IF [NOT]
+// EXISTS for.
+func when(cond, stmt string) string {
+	return "DO $dbproof$ BEGIN IF " + cond + " THEN " + stmt + "; END IF; END $dbproof$"
+}
+
+// unlessExists runs stmt only when query finds no row.
+func unlessExists(query, stmt string) string {
+	return when("NOT EXISTS ("+query+")", stmt)
+}
+
 func ifNotExistsSQL(on bool) string {
 	if on {
 		return "IF NOT EXISTS "
