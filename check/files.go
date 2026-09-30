@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // File is one versioned migration in the repository.

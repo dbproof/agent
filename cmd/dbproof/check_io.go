@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/borovikovd/stratum-agent/check"
-	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
+	"github.com/borovikovd/dbproof-agent/check"
+	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
 )
 
 // pullRequest describes the pull request under check: from flags, or from
@@ -146,7 +146,7 @@ var conclusions = map[agentv1.Conclusion]string{
 // job summary when running in Actions, and returns the exit code.
 func report(w io.Writer, v *agentv1.GetCheckVerdictResponse) int {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Stratum check: %s\n", conclusions[v.GetConclusion()])
+	fmt.Fprintf(&b, "DbProof check: %s\n", conclusions[v.GetConclusion()])
 	if v.GetSetupProblem() != "" {
 		fmt.Fprintf(&b, "  %s\n", v.GetSetupProblem())
 	}
@@ -185,7 +185,7 @@ func severity(f *agentv1.Finding) string {
 // has the full list.
 func annotate(w *strings.Builder, v *agentv1.GetCheckVerdictResponse) {
 	if v.GetSetupProblem() != "" {
-		fmt.Fprintf(w, "::warning title=Stratum setup problem::%s\n", escape(v.GetSetupProblem()))
+		fmt.Fprintf(w, "::warning title=DbProof setup problem::%s\n", escape(v.GetSetupProblem()))
 	}
 	for _, f := range v.GetFindings() {
 		fmt.Fprintf(w, "::%s file=%s,line=%d,title=%s::%s\n", severity(f), f.GetFile(), max(f.GetLine(), 1), escape(f.GetTitle()), escape(f.GetDetail()+" "+f.GetFix()))
@@ -194,7 +194,7 @@ func annotate(w *strings.Builder, v *agentv1.GetCheckVerdictResponse) {
 
 func summary(v *agentv1.GetCheckVerdictResponse) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "## Stratum: %s\n\n", conclusions[v.GetConclusion()])
+	fmt.Fprintf(&b, "## DbProof: %s\n\n", conclusions[v.GetConclusion()])
 	if v.GetSetupProblem() != "" {
 		fmt.Fprintf(&b, "%s\n\n", v.GetSetupProblem())
 	}
@@ -208,7 +208,7 @@ func summary(v *agentv1.GetCheckVerdictResponse) string {
 		b.WriteString("No findings.\n\n")
 	}
 	if v.GetDetailsUrl() != "" {
-		fmt.Fprintf(&b, "[Open in Stratum](%s)\n", v.GetDetailsUrl())
+		fmt.Fprintf(&b, "[Open in DbProof](%s)\n", v.GetDetailsUrl())
 	}
 	return b.String()
 }

@@ -15,17 +15,17 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/stratum-agent/check"
-	"github.com/borovikovd/stratum-agent/client"
-	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/check"
+	"github.com/borovikovd/dbproof-agent/client"
+	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
-// errUnavailable means Stratum couldn't be reached or didn't answer in time.
-var errUnavailable = errors.New("stratum unavailable")
+// errUnavailable means DbProof couldn't be reached or didn't answer in time.
+var errUnavailable = errors.New("dbproof unavailable")
 
 // unavailableMessage is the annotation a fail-open check leaves.
-const unavailableMessage = "Stratum unavailable, check skipped."
+const unavailableMessage = "DbProof unavailable, check skipped."
 
 type checkFlags struct {
 	project, database, migrationsDir, migrateCommand, prFiles, baseRef, repoRoot string
@@ -35,37 +35,37 @@ type checkFlags struct {
 }
 
 // runCheck runs the pull request check and returns the exit code: 1 only
-// when the migrations have errors, or when Stratum is unreachable and the
+// when the migrations have errors, or when DbProof is unreachable and the
 // workflow asked for -fail-on-unreachable.
 func runCheck(args []string) int {
 	var f checkFlags
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
-	fs.StringVar(&f.project, "project", os.Getenv("STRATUM_PROJECT"), "the Stratum project, org/slug")
-	fs.StringVar(&f.database, "database", os.Getenv("STRATUM_CHECK_DSN"), "postgres:// URL of an empty throwaway database, as a superuser")
+	fs.StringVar(&f.project, "project", os.Getenv("DBPROOF_PROJECT"), "the DbProof project, org/slug")
+	fs.StringVar(&f.database, "database", os.Getenv("DBPROOF_CHECK_DSN"), "postgres:// URL of an empty throwaway database, as a superuser")
 	fs.StringVar(&f.migrationsDir, "migrations-dir", "", "the migrations folder")
-	fs.StringVar(&f.migrateCommand, "migrate-command", "", "your migrate command, e.g. flyway -url=$STRATUM_CHECK_JDBC_URL -user=$STRATUM_CHECK_USER -password=$STRATUM_CHECK_PASSWORD migrate")
+	fs.StringVar(&f.migrateCommand, "migrate-command", "", "your migrate command, e.g. flyway -url=$DBPROOF_CHECK_JDBC_URL -user=$DBPROOF_CHECK_USER -password=$DBPROOF_CHECK_PASSWORD migrate")
 	fs.StringVar(&f.prFiles, "pull-request-files", "", "comma-separated migration files the pull request adds or changes, relative to the working directory; default: git diff against -base-ref")
 	fs.StringVar(&f.baseRef, "base-ref", os.Getenv("GITHUB_BASE_REF"), "the pull request's base branch")
 	fs.StringVar(&f.repoRoot, "repo-root", envOr("GITHUB_WORKSPACE", "."), "the repository root, for file paths in annotations")
-	fs.DurationVar(&f.verdictTimeout, "verdict-timeout", 3*time.Minute, "how long to wait for Stratum's verdict")
-	fs.BoolVar(&f.failOnUnreachable, "fail-on-unreachable", false, "fail instead of passing with a warning when Stratum is unreachable")
+	fs.DurationVar(&f.verdictTimeout, "verdict-timeout", 3*time.Minute, "how long to wait for DbProof's verdict")
+	fs.BoolVar(&f.failOnUnreachable, "fail-on-unreachable", false, "fail instead of passing with a warning when DbProof is unreachable")
 	f.pr.register(fs)
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	if f.project == "" || f.database == "" || f.migrationsDir == "" || f.migrateCommand == "" {
-		fmt.Fprintln(os.Stderr, "stratum check: -project, -database, -migrations-dir and -migrate-command are required")
+		fmt.Fprintln(os.Stderr, "dbproof check: -project, -database, -migrations-dir and -migrate-command are required")
 		return 2
 	}
-	stratumURL := os.Getenv("STRATUM_URL")
-	if stratumURL == "" {
-		fmt.Fprintln(os.Stderr, "stratum check: STRATUM_URL is not set")
+	dbproofURL := os.Getenv("DBPROOF_URL")
+	if dbproofURL == "" {
+		fmt.Fprintln(os.Stderr, "dbproof check: DBPROOF_URL is not set")
 		return 2
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	verdict, err := checkPullRequest(ctx, stratumURL, f)
+	verdict, err := checkPullRequest(ctx, dbproofURL, f)
 	if errors.Is(err, errUnavailable) {
 		warn("%s", unavailableMessage)
 		if f.failOnUnreachable {
@@ -75,21 +75,21 @@ func runCheck(args []string) int {
 	}
 	if err != nil {
 		// A broken check is a setup problem, not the migrations' fault.
-		warn("Stratum check couldn't run: %v", err)
+		warn("DbProof check couldn't run: %v", err)
 		return 0
 	}
 	return report(os.Stdout, verdict)
 }
 
-func checkPullRequest(ctx context.Context, stratumURL string, f checkFlags) (*agentv1.GetCheckVerdictResponse, error) {
-	token := os.Getenv("STRATUM_CHECK_TOKEN")
+func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*agentv1.GetCheckVerdictResponse, error) {
+	token := os.Getenv("DBPROOF_CHECK_TOKEN")
 	if token == "" {
 		var err error
 		if token, err = client.ActionsOIDCToken(ctx); err != nil {
 			return nil, err
 		}
 	}
-	c := client.New(client.Options{BaseURL: stratumURL, Token: token, Project: f.project})
+	c := client.New(client.Options{BaseURL: dbproofURL, Token: token, Project: f.project})
 
 	pr, err := f.pr.resolve()
 	if err != nil {
@@ -149,8 +149,8 @@ func checkPullRequest(ctx context.Context, stratumURL string, f checkFlags) (*ag
 	return waitForVerdict(ctx, c, begin.Msg.GetCheckId(), f.verdictTimeout)
 }
 
-// waitForVerdict polls until Stratum has evaluated the check, or the wait
-// runs out, which counts as Stratum being unavailable.
+// waitForVerdict polls until DbProof has evaluated the check, or the wait
+// runs out, which counts as DbProof being unavailable.
 func waitForVerdict(ctx context.Context, c *client.Client, checkID string, timeout time.Duration) (*agentv1.GetCheckVerdictResponse, error) {
 	deadline := time.Now().Add(timeout)
 	for {
@@ -181,7 +181,7 @@ func unreachable(err error) error {
 	return err
 }
 
-// isUnreachable reports whether err means Stratum is down, failing or slow,
+// isUnreachable reports whether err means DbProof is down, failing or slow,
 // rather than refusing the request.
 func isUnreachable(err error) bool {
 	switch connect.CodeOf(err) {

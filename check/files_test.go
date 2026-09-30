@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/borovikovd/stratum-agent/check"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/check"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // Flyway finds migrations in subfolders of its location; Atlas reads one

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package stratum.agent.v1;
+package dbproof.agent.v1;
 
 import "buf/validate/validate.proto";
 

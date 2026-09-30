@@ -38,7 +38,7 @@ jobs:
         run: bin/buf breaking --against ".git#branch=origin/${{ github.base_ref }}"
 
   # The GitHub Actions customers use build the agent and run it. Without a
-  # token capture skips, and with Stratum unreachable check passes with a
+  # token capture skips, and with DbProof unreachable check passes with a
   # warning: both exit 0, which proves the actions build and wire the agent.
   actions:
     runs-on: ubuntu-latest
@@ -47,15 +47,15 @@ jobs:
       - uses: ./actions/capture
         with:
           kind: scheduled
-          stratum-url: http://localhost:9
+          dbproof-url: http://localhost:9
           capture-token: ""
           capture-dsn: ""
       - uses: ./actions/check
         env:
-          STRATUM_CHECK_TOKEN: smoke-test
+          DBPROOF_CHECK_TOKEN: smoke-test
         with:
           project: smoke/test
           migrations-dir: testdata
           migrate-command: "false"
-          stratum-url: http://localhost:9
+          dbproof-url: http://localhost:9
           fail-on-unreachable: "false"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/borovikovd/stratum-agent/internal/pgtest"
-	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/dbproof-agent/internal/pgtest"
+	"github.com/borovikovd/dbproof-agent/schema"
 )
 
 func TestInspectExclusions(t *testing.T) {

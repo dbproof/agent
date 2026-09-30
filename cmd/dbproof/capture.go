@@ -13,10 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/stratum-agent/capture"
-	"github.com/borovikovd/stratum-agent/client"
-	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/capture"
+	"github.com/borovikovd/dbproof-agent/client"
+	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 type stringList []string
@@ -31,17 +31,17 @@ func runCapture(args []string) int {
 	kind := fs.String("kind", "", "when this capture runs: pre (before migrations), post (after) or scheduled")
 	expect := fs.String("expect-version", "", "post-deploy: wait until the history shows this migration version")
 	wait := fs.Duration("wait-timeout", 10*time.Minute, "post-deploy: how long to wait for -expect-version")
-	tool := fs.String("tool", "", "flyway or atlas; overrides Stratum's project setting")
-	history := fs.String("history-table", "", "schema.table of the migration history; overrides Stratum's setting")
+	tool := fs.String("tool", "", "flyway or atlas; overrides DbProof's project setting")
+	history := fs.String("history-table", "", "schema.table of the migration history; overrides DbProof's setting")
 	var exclude stringList
-	fs.Var(&exclude, "exclude", `"schema.*" or "schema.table" to leave out; repeatable; overrides Stratum's setting`)
+	fs.Var(&exclude, "exclude", `"schema.*" or "schema.table" to leave out; repeatable; overrides DbProof's setting`)
 	fs.Usage = func() {
-		fmt.Fprintln(os.Stderr, `Usage: stratum capture -kind=pre|post|scheduled [flags]
+		fmt.Fprintln(os.Stderr, `Usage: dbproof capture -kind=pre|post|scheduled [flags]
 
 Environment:
-  STRATUM_URL            Stratum's address
-  STRATUM_CAPTURE_TOKEN  the project's upload-only capture token
-  STRATUM_CAPTURE_DSN    connection string for a role that can read the migration
+  DBPROOF_URL            DbProof's address
+  DBPROOF_CAPTURE_TOKEN  the project's upload-only capture token
+  DBPROOF_CAPTURE_DSN    connection string for a role that can read the migration
                          history, such as the one your migrations run as
 
 Flags:`)
@@ -53,29 +53,29 @@ Flags:`)
 	kinds := map[string]snapshot.Kind{"pre": snapshot.KindPreDeploy, "post": snapshot.KindPostDeploy, "scheduled": snapshot.KindScheduled}
 	k, ok := kinds[*kind]
 	if !ok {
-		fmt.Fprintln(os.Stderr, "stratum capture: -kind must be pre, post or scheduled")
+		fmt.Fprintln(os.Stderr, "dbproof capture: -kind must be pre, post or scheduled")
 		return 2
 	}
 	env := map[string]string{}
-	for _, name := range []string{"STRATUM_URL", "STRATUM_CAPTURE_TOKEN", "STRATUM_CAPTURE_DSN"} {
+	for _, name := range []string{"DBPROOF_URL", "DBPROOF_CAPTURE_TOKEN", "DBPROOF_CAPTURE_DSN"} {
 		if env[name] = os.Getenv(name); env[name] == "" {
-			warn("Stratum capture skipped: %s is not set", name)
+			warn("DbProof capture skipped: %s is not set", name)
 			return 0
 		}
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	c := client.New(client.Options{BaseURL: env["STRATUM_URL"], Token: env["STRATUM_CAPTURE_TOKEN"], Project: os.Getenv("STRATUM_PROJECT")})
+	c := client.New(client.Options{BaseURL: env["DBPROOF_URL"], Token: env["DBPROOF_CAPTURE_TOKEN"], Project: os.Getenv("DBPROOF_PROJECT")})
 
 	cfg := capture.Config{Kind: k, ExpectVersion: *expect, WaitTimeout: *wait, AgentVersion: version}
 	remote, err := c.Capture.GetCaptureConfig(ctx, connect.NewRequest(&agentv1.GetCaptureConfigRequest{AgentVersion: version}))
 	if err != nil {
 		if !isUnreachable(err) {
-			warn("Stratum capture skipped: %v", err)
+			warn("DbProof capture skipped: %v", err)
 			return 0
 		}
-		warn("Stratum is unreachable (%v); capturing with local settings, then retrying the upload", err)
+		warn("DbProof is unreachable (%v); capturing with local settings, then retrying the upload", err)
 	} else {
 		cfg.Tool = client.Tool(remote.Msg.GetTool())
 		cfg.HistoryTable = remote.Msg.GetHistoryTable()
@@ -92,18 +92,18 @@ Flags:`)
 		cfg.Exclude = exclude
 	}
 	if cfg.Tool != snapshot.ToolFlyway && cfg.Tool != snapshot.ToolAtlas {
-		warn("Stratum capture skipped: set -tool to flyway or atlas")
+		warn("DbProof capture skipped: set -tool to flyway or atlas")
 		return 0
 	}
 
-	snap, err := captureDatabase(ctx, env["STRATUM_CAPTURE_DSN"], cfg)
+	snap, err := captureDatabase(ctx, env["DBPROOF_CAPTURE_DSN"], cfg)
 	if err != nil {
-		warn("Stratum capture skipped: %v", err)
+		warn("DbProof capture skipped: %v", err)
 		return 0
 	}
 	body, err := snapshot.Encode(snap)
 	if err != nil {
-		warn("Stratum capture skipped: %v", err)
+		warn("DbProof capture skipped: %v", err)
 		return 0
 	}
 	resp, err := c.Capture.UploadSnapshot(ctx, connect.NewRequest(&agentv1.UploadSnapshotRequest{
@@ -113,12 +113,12 @@ Flags:`)
 		CommitSha:    os.Getenv("GITHUB_SHA"),
 	}))
 	if err != nil {
-		warn("Stratum capture wasn't uploaded: %v", err)
+		warn("DbProof capture wasn't uploaded: %v", err)
 		return 0
 	}
 	fmt.Fprintf(os.Stderr, "Uploaded capture %s (%d tables, %d KB)\n", resp.Msg.GetCaptureId(), len(snap.Schema.Tables), len(body)/1024)
 	if minVersion := resp.Msg.GetMinAgentVersion(); client.OlderThan(version, minVersion) {
-		warn("This agent (%s) is older than Stratum supports (%s); upgrade it", version, minVersion)
+		warn("This agent (%s) is older than DbProof supports (%s); upgrade it", version, minVersion)
 	}
 	return 0
 }

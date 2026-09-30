@@ -17,7 +17,7 @@ func TestPullRequestFilesResolveFromTheWorkingDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo := filepath.Join(workspace, "stratum")
+	repo := filepath.Join(workspace, "dbproof")
 	if err := os.Mkdir(repo, 0o755); err != nil {
 		t.Fatal(err)
 	}

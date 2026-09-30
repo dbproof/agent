@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/borovikovd/stratum-agent/internal/pgtest"
-	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/dbproof-agent/internal/pgtest"
+	"github.com/borovikovd/dbproof-agent/schema"
 )
 
 func hasView(s *schema.Schema, id string) bool {

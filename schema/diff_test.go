@@ -45,7 +45,7 @@ func TestDiffColumnFieldsAndOrder(t *testing.T) {
 func TestDiffIgnoreTables(t *testing.T) {
 	history := Table{Schema: "public", Name: "flyway_schema_history", Columns: []Column{{Name: "version", Type: "text"}}}
 	a := &Schema{}
-	b := &Schema{Tables: []Table{history}, Grants: []Grant{{ObjectKind: ObjectTable, Object: "public.flyway_schema_history", Grantee: "stratum_capture", Privilege: "SELECT"}}}
+	b := &Schema{Tables: []Table{history}, Grants: []Grant{{ObjectKind: ObjectTable, Object: "public.flyway_schema_history", Grantee: "dbproof_capture", Privilege: "SELECT"}}}
 	if c := Diff(a, b, DiffOptions{IgnoreTables: []string{"public.flyway_schema_history"}}); len(c) != 0 {
 		t.Fatalf("Diff with ignored table = %v, want none", c)
 	}

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        (unknown)
-// source: stratum/agent/v1/capture.proto
+// source: dbproof/agent/v1/capture.proto
 
 package agentv1
 
@@ -56,11 +56,11 @@ func (x MigrationTool) String() string {
 }
 
 func (MigrationTool) Descriptor() protoreflect.EnumDescriptor {
-	return file_stratum_agent_v1_capture_proto_enumTypes[0].Descriptor()
+	return file_dbproof_agent_v1_capture_proto_enumTypes[0].Descriptor()
 }
 
 func (MigrationTool) Type() protoreflect.EnumType {
-	return &file_stratum_agent_v1_capture_proto_enumTypes[0]
+	return &file_dbproof_agent_v1_capture_proto_enumTypes[0]
 }
 
 func (x MigrationTool) Number() protoreflect.EnumNumber {
@@ -69,7 +69,7 @@ func (x MigrationTool) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MigrationTool.Descriptor instead.
 func (MigrationTool) EnumDescriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_capture_proto_rawDescGZIP(), []int{0}
+	return file_dbproof_agent_v1_capture_proto_rawDescGZIP(), []int{0}
 }
 
 type GetCaptureConfigRequest struct {
@@ -81,7 +81,7 @@ type GetCaptureConfigRequest struct {
 
 func (x *GetCaptureConfigRequest) Reset() {
 	*x = GetCaptureConfigRequest{}
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[0]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -93,7 +93,7 @@ func (x *GetCaptureConfigRequest) String() string {
 func (*GetCaptureConfigRequest) ProtoMessage() {}
 
 func (x *GetCaptureConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[0]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,7 +106,7 @@ func (x *GetCaptureConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCaptureConfigRequest.ProtoReflect.Descriptor instead.
 func (*GetCaptureConfigRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_capture_proto_rawDescGZIP(), []int{0}
+	return file_dbproof_agent_v1_capture_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetCaptureConfigRequest) GetAgentVersion() string {
@@ -120,7 +120,7 @@ type GetCaptureConfigResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// project is "org/slug", for the agent's log.
 	Project string        `protobuf:"bytes,1,opt,name=project,proto3" json:"project,omitempty"`
-	Tool    MigrationTool `protobuf:"varint,2,opt,name=tool,proto3,enum=stratum.agent.v1.MigrationTool" json:"tool,omitempty"`
+	Tool    MigrationTool `protobuf:"varint,2,opt,name=tool,proto3,enum=dbproof.agent.v1.MigrationTool" json:"tool,omitempty"`
 	// history_table is the migration history table, e.g.
 	// public.flyway_schema_history.
 	HistoryTable string `protobuf:"bytes,3,opt,name=history_table,json=historyTable,proto3" json:"history_table,omitempty"`
@@ -135,7 +135,7 @@ type GetCaptureConfigResponse struct {
 
 func (x *GetCaptureConfigResponse) Reset() {
 	*x = GetCaptureConfigResponse{}
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[1]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +147,7 @@ func (x *GetCaptureConfigResponse) String() string {
 func (*GetCaptureConfigResponse) ProtoMessage() {}
 
 func (x *GetCaptureConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[1]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +160,7 @@ func (x *GetCaptureConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCaptureConfigResponse.ProtoReflect.Descriptor instead.
 func (*GetCaptureConfigResponse) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_capture_proto_rawDescGZIP(), []int{1}
+	return file_dbproof_agent_v1_capture_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetCaptureConfigResponse) GetProject() string {
@@ -213,7 +213,7 @@ type UploadSnapshotRequest struct {
 
 func (x *UploadSnapshotRequest) Reset() {
 	*x = UploadSnapshotRequest{}
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[2]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +225,7 @@ func (x *UploadSnapshotRequest) String() string {
 func (*UploadSnapshotRequest) ProtoMessage() {}
 
 func (x *UploadSnapshotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[2]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +238,7 @@ func (x *UploadSnapshotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadSnapshotRequest.ProtoReflect.Descriptor instead.
 func (*UploadSnapshotRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_capture_proto_rawDescGZIP(), []int{2}
+	return file_dbproof_agent_v1_capture_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UploadSnapshotRequest) GetUploadId() string {
@@ -279,7 +279,7 @@ type UploadSnapshotResponse struct {
 
 func (x *UploadSnapshotResponse) Reset() {
 	*x = UploadSnapshotResponse{}
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[3]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +291,7 @@ func (x *UploadSnapshotResponse) String() string {
 func (*UploadSnapshotResponse) ProtoMessage() {}
 
 func (x *UploadSnapshotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_capture_proto_msgTypes[3]
+	mi := &file_dbproof_agent_v1_capture_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +304,7 @@ func (x *UploadSnapshotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadSnapshotResponse.ProtoReflect.Descriptor instead.
 func (*UploadSnapshotResponse) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_capture_proto_rawDescGZIP(), []int{3}
+	return file_dbproof_agent_v1_capture_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UploadSnapshotResponse) GetCaptureId() string {
@@ -321,16 +321,16 @@ func (x *UploadSnapshotResponse) GetMinAgentVersion() string {
 	return ""
 }
 
-var File_stratum_agent_v1_capture_proto protoreflect.FileDescriptor
+var File_dbproof_agent_v1_capture_proto protoreflect.FileDescriptor
 
-const file_stratum_agent_v1_capture_proto_rawDesc = "" +
+const file_dbproof_agent_v1_capture_proto_rawDesc = "" +
 	"\n" +
-	"\x1estratum/agent/v1/capture.proto\x12\x10stratum.agent.v1\x1a\x1bbuf/validate/validate.proto\">\n" +
+	"\x1edbproof/agent/v1/capture.proto\x12\x10dbproof.agent.v1\x1a\x1bbuf/validate/validate.proto\">\n" +
 	"\x17GetCaptureConfigRequest\x12#\n" +
 	"\ragent_version\x18\x01 \x01(\tR\fagentVersion\"\xda\x01\n" +
 	"\x18GetCaptureConfigResponse\x12\x18\n" +
 	"\aproject\x18\x01 \x01(\tR\aproject\x123\n" +
-	"\x04tool\x18\x02 \x01(\x0e2\x1f.stratum.agent.v1.MigrationToolR\x04tool\x12#\n" +
+	"\x04tool\x18\x02 \x01(\x0e2\x1f.dbproof.agent.v1.MigrationToolR\x04tool\x12#\n" +
 	"\rhistory_table\x18\x03 \x01(\tR\fhistoryTable\x12\x1e\n" +
 	"\n" +
 	"exclusions\x18\x04 \x03(\tR\n" +
@@ -351,37 +351,37 @@ const file_stratum_agent_v1_capture_proto_rawDesc = "" +
 	"\x15MIGRATION_TOOL_FLYWAY\x10\x01\x12\x18\n" +
 	"\x14MIGRATION_TOOL_ATLAS\x10\x022\xe0\x01\n" +
 	"\x0eCaptureService\x12i\n" +
-	"\x10GetCaptureConfig\x12).stratum.agent.v1.GetCaptureConfigRequest\x1a*.stratum.agent.v1.GetCaptureConfigResponse\x12c\n" +
-	"\x0eUploadSnapshot\x12'.stratum.agent.v1.UploadSnapshotRequest\x1a(.stratum.agent.v1.UploadSnapshotResponseB\xc8\x01\n" +
-	"\x14com.stratum.agent.v1B\fCaptureProtoP\x01Z@github.com/borovikovd/stratum-agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
+	"\x10GetCaptureConfig\x12).dbproof.agent.v1.GetCaptureConfigRequest\x1a*.dbproof.agent.v1.GetCaptureConfigResponse\x12c\n" +
+	"\x0eUploadSnapshot\x12'.dbproof.agent.v1.UploadSnapshotRequest\x1a(.dbproof.agent.v1.UploadSnapshotResponseB\xc8\x01\n" +
+	"\x14com.dbproof.agent.v1B\fCaptureProtoP\x01Z@github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
 
 var (
-	file_stratum_agent_v1_capture_proto_rawDescOnce sync.Once
-	file_stratum_agent_v1_capture_proto_rawDescData []byte
+	file_dbproof_agent_v1_capture_proto_rawDescOnce sync.Once
+	file_dbproof_agent_v1_capture_proto_rawDescData []byte
 )
 
-func file_stratum_agent_v1_capture_proto_rawDescGZIP() []byte {
-	file_stratum_agent_v1_capture_proto_rawDescOnce.Do(func() {
-		file_stratum_agent_v1_capture_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stratum_agent_v1_capture_proto_rawDesc), len(file_stratum_agent_v1_capture_proto_rawDesc)))
+func file_dbproof_agent_v1_capture_proto_rawDescGZIP() []byte {
+	file_dbproof_agent_v1_capture_proto_rawDescOnce.Do(func() {
+		file_dbproof_agent_v1_capture_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_dbproof_agent_v1_capture_proto_rawDesc), len(file_dbproof_agent_v1_capture_proto_rawDesc)))
 	})
-	return file_stratum_agent_v1_capture_proto_rawDescData
+	return file_dbproof_agent_v1_capture_proto_rawDescData
 }
 
-var file_stratum_agent_v1_capture_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_stratum_agent_v1_capture_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_stratum_agent_v1_capture_proto_goTypes = []any{
-	(MigrationTool)(0),               // 0: stratum.agent.v1.MigrationTool
-	(*GetCaptureConfigRequest)(nil),  // 1: stratum.agent.v1.GetCaptureConfigRequest
-	(*GetCaptureConfigResponse)(nil), // 2: stratum.agent.v1.GetCaptureConfigResponse
-	(*UploadSnapshotRequest)(nil),    // 3: stratum.agent.v1.UploadSnapshotRequest
-	(*UploadSnapshotResponse)(nil),   // 4: stratum.agent.v1.UploadSnapshotResponse
+var file_dbproof_agent_v1_capture_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_dbproof_agent_v1_capture_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_dbproof_agent_v1_capture_proto_goTypes = []any{
+	(MigrationTool)(0),               // 0: dbproof.agent.v1.MigrationTool
+	(*GetCaptureConfigRequest)(nil),  // 1: dbproof.agent.v1.GetCaptureConfigRequest
+	(*GetCaptureConfigResponse)(nil), // 2: dbproof.agent.v1.GetCaptureConfigResponse
+	(*UploadSnapshotRequest)(nil),    // 3: dbproof.agent.v1.UploadSnapshotRequest
+	(*UploadSnapshotResponse)(nil),   // 4: dbproof.agent.v1.UploadSnapshotResponse
 }
-var file_stratum_agent_v1_capture_proto_depIdxs = []int32{
-	0, // 0: stratum.agent.v1.GetCaptureConfigResponse.tool:type_name -> stratum.agent.v1.MigrationTool
-	1, // 1: stratum.agent.v1.CaptureService.GetCaptureConfig:input_type -> stratum.agent.v1.GetCaptureConfigRequest
-	3, // 2: stratum.agent.v1.CaptureService.UploadSnapshot:input_type -> stratum.agent.v1.UploadSnapshotRequest
-	2, // 3: stratum.agent.v1.CaptureService.GetCaptureConfig:output_type -> stratum.agent.v1.GetCaptureConfigResponse
-	4, // 4: stratum.agent.v1.CaptureService.UploadSnapshot:output_type -> stratum.agent.v1.UploadSnapshotResponse
+var file_dbproof_agent_v1_capture_proto_depIdxs = []int32{
+	0, // 0: dbproof.agent.v1.GetCaptureConfigResponse.tool:type_name -> dbproof.agent.v1.MigrationTool
+	1, // 1: dbproof.agent.v1.CaptureService.GetCaptureConfig:input_type -> dbproof.agent.v1.GetCaptureConfigRequest
+	3, // 2: dbproof.agent.v1.CaptureService.UploadSnapshot:input_type -> dbproof.agent.v1.UploadSnapshotRequest
+	2, // 3: dbproof.agent.v1.CaptureService.GetCaptureConfig:output_type -> dbproof.agent.v1.GetCaptureConfigResponse
+	4, // 4: dbproof.agent.v1.CaptureService.UploadSnapshot:output_type -> dbproof.agent.v1.UploadSnapshotResponse
 	3, // [3:5] is the sub-list for method output_type
 	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -389,27 +389,27 @@ var file_stratum_agent_v1_capture_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_stratum_agent_v1_capture_proto_init() }
-func file_stratum_agent_v1_capture_proto_init() {
-	if File_stratum_agent_v1_capture_proto != nil {
+func init() { file_dbproof_agent_v1_capture_proto_init() }
+func file_dbproof_agent_v1_capture_proto_init() {
+	if File_dbproof_agent_v1_capture_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stratum_agent_v1_capture_proto_rawDesc), len(file_stratum_agent_v1_capture_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dbproof_agent_v1_capture_proto_rawDesc), len(file_dbproof_agent_v1_capture_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_stratum_agent_v1_capture_proto_goTypes,
-		DependencyIndexes: file_stratum_agent_v1_capture_proto_depIdxs,
-		EnumInfos:         file_stratum_agent_v1_capture_proto_enumTypes,
-		MessageInfos:      file_stratum_agent_v1_capture_proto_msgTypes,
+		GoTypes:           file_dbproof_agent_v1_capture_proto_goTypes,
+		DependencyIndexes: file_dbproof_agent_v1_capture_proto_depIdxs,
+		EnumInfos:         file_dbproof_agent_v1_capture_proto_enumTypes,
+		MessageInfos:      file_dbproof_agent_v1_capture_proto_msgTypes,
 	}.Build()
-	File_stratum_agent_v1_capture_proto = out.File
-	file_stratum_agent_v1_capture_proto_goTypes = nil
-	file_stratum_agent_v1_capture_proto_depIdxs = nil
+	File_dbproof_agent_v1_capture_proto = out.File
+	file_dbproof_agent_v1_capture_proto_goTypes = nil
+	file_dbproof_agent_v1_capture_proto_depIdxs = nil
 }

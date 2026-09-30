@@ -1,4 +1,4 @@
--- The northwind billing-service schema that Stratum's seed data and demo use.
+-- The northwind billing-service schema that DbProof's seed data and demo use.
 CREATE TABLE public.flyway_schema_history (
   installed_rank integer NOT NULL PRIMARY KEY,
   version varchar(50),

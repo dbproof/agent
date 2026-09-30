@@ -1,4 +1,4 @@
-// Package snapshot defines the versioned format the agent uploads to Stratum:
+// Package snapshot defines the versioned format the agent uploads to DbProof:
 // a schema, planner statistics and the migration history table's rows. It
 // never contains values from application tables.
 package snapshot
@@ -11,7 +11,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/borovikovd/stratum-agent/schema"
+	"github.com/borovikovd/dbproof-agent/schema"
 )
 
 // FormatVersion is the snapshot format this agent writes. Readers accept any

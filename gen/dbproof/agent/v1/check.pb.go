@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        (unknown)
-// source: stratum/agent/v1/check.proto
+// source: dbproof/agent/v1/check.proto
 
 package agentv1
 
@@ -63,11 +63,11 @@ func (x StepStatus) String() string {
 }
 
 func (StepStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_stratum_agent_v1_check_proto_enumTypes[0].Descriptor()
+	return file_dbproof_agent_v1_check_proto_enumTypes[0].Descriptor()
 }
 
 func (StepStatus) Type() protoreflect.EnumType {
-	return &file_stratum_agent_v1_check_proto_enumTypes[0]
+	return &file_dbproof_agent_v1_check_proto_enumTypes[0]
 }
 
 func (x StepStatus) Number() protoreflect.EnumNumber {
@@ -76,7 +76,7 @@ func (x StepStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use StepStatus.Descriptor instead.
 func (StepStatus) EnumDescriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{0}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{0}
 }
 
 // MigrationSource says where a pending migration came from.
@@ -115,11 +115,11 @@ func (x MigrationSource) String() string {
 }
 
 func (MigrationSource) Descriptor() protoreflect.EnumDescriptor {
-	return file_stratum_agent_v1_check_proto_enumTypes[1].Descriptor()
+	return file_dbproof_agent_v1_check_proto_enumTypes[1].Descriptor()
 }
 
 func (MigrationSource) Type() protoreflect.EnumType {
-	return &file_stratum_agent_v1_check_proto_enumTypes[1]
+	return &file_dbproof_agent_v1_check_proto_enumTypes[1]
 }
 
 func (x MigrationSource) Number() protoreflect.EnumNumber {
@@ -128,7 +128,7 @@ func (x MigrationSource) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MigrationSource.Descriptor instead.
 func (MigrationSource) EnumDescriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{1}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{1}
 }
 
 // Conclusion is the check's verdict.
@@ -172,11 +172,11 @@ func (x Conclusion) String() string {
 }
 
 func (Conclusion) Descriptor() protoreflect.EnumDescriptor {
-	return file_stratum_agent_v1_check_proto_enumTypes[2].Descriptor()
+	return file_dbproof_agent_v1_check_proto_enumTypes[2].Descriptor()
 }
 
 func (Conclusion) Type() protoreflect.EnumType {
-	return &file_stratum_agent_v1_check_proto_enumTypes[2]
+	return &file_dbproof_agent_v1_check_proto_enumTypes[2]
 }
 
 func (x Conclusion) Number() protoreflect.EnumNumber {
@@ -185,7 +185,7 @@ func (x Conclusion) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Conclusion.Descriptor instead.
 func (Conclusion) EnumDescriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{2}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{2}
 }
 
 // Severity is a finding's severity.
@@ -222,11 +222,11 @@ func (x Severity) String() string {
 }
 
 func (Severity) Descriptor() protoreflect.EnumDescriptor {
-	return file_stratum_agent_v1_check_proto_enumTypes[3].Descriptor()
+	return file_dbproof_agent_v1_check_proto_enumTypes[3].Descriptor()
 }
 
 func (Severity) Type() protoreflect.EnumType {
-	return &file_stratum_agent_v1_check_proto_enumTypes[3]
+	return &file_dbproof_agent_v1_check_proto_enumTypes[3]
 }
 
 func (x Severity) Number() protoreflect.EnumNumber {
@@ -235,7 +235,7 @@ func (x Severity) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Severity.Descriptor instead.
 func (Severity) EnumDescriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{3}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{3}
 }
 
 type PullRequest struct {
@@ -252,7 +252,7 @@ type PullRequest struct {
 
 func (x *PullRequest) Reset() {
 	*x = PullRequest{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[0]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -264,7 +264,7 @@ func (x *PullRequest) String() string {
 func (*PullRequest) ProtoMessage() {}
 
 func (x *PullRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[0]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -277,7 +277,7 @@ func (x *PullRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PullRequest.ProtoReflect.Descriptor instead.
 func (*PullRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{0}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PullRequest) GetNumber() int32 {
@@ -340,7 +340,7 @@ type BeginCheckRequest struct {
 
 func (x *BeginCheckRequest) Reset() {
 	*x = BeginCheckRequest{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[1]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -352,7 +352,7 @@ func (x *BeginCheckRequest) String() string {
 func (*BeginCheckRequest) ProtoMessage() {}
 
 func (x *BeginCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[1]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -365,7 +365,7 @@ func (x *BeginCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginCheckRequest.ProtoReflect.Descriptor instead.
 func (*BeginCheckRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{1}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *BeginCheckRequest) GetProject() string {
@@ -417,7 +417,7 @@ type BeginCheckResponse struct {
 	Snapshot []byte `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
 	// snapshot_version is its label, e.g. S-24.
 	SnapshotVersion string        `protobuf:"bytes,3,opt,name=snapshot_version,json=snapshotVersion,proto3" json:"snapshot_version,omitempty"`
-	Tool            MigrationTool `protobuf:"varint,4,opt,name=tool,proto3,enum=stratum.agent.v1.MigrationTool" json:"tool,omitempty"`
+	Tool            MigrationTool `protobuf:"varint,4,opt,name=tool,proto3,enum=dbproof.agent.v1.MigrationTool" json:"tool,omitempty"`
 	MinAgentVersion string        `protobuf:"bytes,5,opt,name=min_agent_version,json=minAgentVersion,proto3" json:"min_agent_version,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -425,7 +425,7 @@ type BeginCheckResponse struct {
 
 func (x *BeginCheckResponse) Reset() {
 	*x = BeginCheckResponse{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[2]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +437,7 @@ func (x *BeginCheckResponse) String() string {
 func (*BeginCheckResponse) ProtoMessage() {}
 
 func (x *BeginCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[2]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +450,7 @@ func (x *BeginCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeginCheckResponse.ProtoReflect.Descriptor instead.
 func (*BeginCheckResponse) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{2}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BeginCheckResponse) GetCheckId() string {
@@ -492,7 +492,7 @@ type Step struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Detail        string                 `protobuf:"bytes,2,opt,name=detail,proto3" json:"detail,omitempty"`
-	Status        StepStatus             `protobuf:"varint,3,opt,name=status,proto3,enum=stratum.agent.v1.StepStatus" json:"status,omitempty"`
+	Status        StepStatus             `protobuf:"varint,3,opt,name=status,proto3,enum=dbproof.agent.v1.StepStatus" json:"status,omitempty"`
 	DurationMs    int64                  `protobuf:"varint,4,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -500,7 +500,7 @@ type Step struct {
 
 func (x *Step) Reset() {
 	*x = Step{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[3]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -512,7 +512,7 @@ func (x *Step) String() string {
 func (*Step) ProtoMessage() {}
 
 func (x *Step) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[3]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,7 +525,7 @@ func (x *Step) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Step.ProtoReflect.Descriptor instead.
 func (*Step) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{3}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Step) GetName() string {
@@ -561,7 +561,7 @@ type Migration struct {
 	Version string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	// file is the path relative to the repository root.
 	File   string          `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
-	Source MigrationSource `protobuf:"varint,3,opt,name=source,proto3,enum=stratum.agent.v1.MigrationSource" json:"source,omitempty"`
+	Source MigrationSource `protobuf:"varint,3,opt,name=source,proto3,enum=dbproof.agent.v1.MigrationSource" json:"source,omitempty"`
 	// sql is the file's content, empty for migrations that aren't SQL files,
 	// such as Java migrations.
 	Sql     string `protobuf:"bytes,4,opt,name=sql,proto3" json:"sql,omitempty"`
@@ -577,7 +577,7 @@ type Migration struct {
 
 func (x *Migration) Reset() {
 	*x = Migration{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[4]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -589,7 +589,7 @@ func (x *Migration) String() string {
 func (*Migration) ProtoMessage() {}
 
 func (x *Migration) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[4]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -602,7 +602,7 @@ func (x *Migration) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Migration.ProtoReflect.Descriptor instead.
 func (*Migration) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{4}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Migration) GetVersion() string {
@@ -674,7 +674,7 @@ type ReportCheckRequest struct {
 
 func (x *ReportCheckRequest) Reset() {
 	*x = ReportCheckRequest{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[5]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +686,7 @@ func (x *ReportCheckRequest) String() string {
 func (*ReportCheckRequest) ProtoMessage() {}
 
 func (x *ReportCheckRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[5]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +699,7 @@ func (x *ReportCheckRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCheckRequest.ProtoReflect.Descriptor instead.
 func (*ReportCheckRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{5}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ReportCheckRequest) GetCheckId() string {
@@ -759,7 +759,7 @@ type ReportCheckResponse struct {
 
 func (x *ReportCheckResponse) Reset() {
 	*x = ReportCheckResponse{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[6]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -771,7 +771,7 @@ func (x *ReportCheckResponse) String() string {
 func (*ReportCheckResponse) ProtoMessage() {}
 
 func (x *ReportCheckResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[6]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -784,7 +784,7 @@ func (x *ReportCheckResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportCheckResponse.ProtoReflect.Descriptor instead.
 func (*ReportCheckResponse) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{6}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{6}
 }
 
 type GetCheckVerdictRequest struct {
@@ -796,7 +796,7 @@ type GetCheckVerdictRequest struct {
 
 func (x *GetCheckVerdictRequest) Reset() {
 	*x = GetCheckVerdictRequest{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[7]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -808,7 +808,7 @@ func (x *GetCheckVerdictRequest) String() string {
 func (*GetCheckVerdictRequest) ProtoMessage() {}
 
 func (x *GetCheckVerdictRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[7]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -821,7 +821,7 @@ func (x *GetCheckVerdictRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCheckVerdictRequest.ProtoReflect.Descriptor instead.
 func (*GetCheckVerdictRequest) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{7}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetCheckVerdictRequest) GetCheckId() string {
@@ -834,7 +834,7 @@ func (x *GetCheckVerdictRequest) GetCheckId() string {
 type Finding struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Rule          string                 `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule,omitempty"`
-	Severity      Severity               `protobuf:"varint,2,opt,name=severity,proto3,enum=stratum.agent.v1.Severity" json:"severity,omitempty"`
+	Severity      Severity               `protobuf:"varint,2,opt,name=severity,proto3,enum=dbproof.agent.v1.Severity" json:"severity,omitempty"`
 	File          string                 `protobuf:"bytes,3,opt,name=file,proto3" json:"file,omitempty"`
 	Line          int32                  `protobuf:"varint,4,opt,name=line,proto3" json:"line,omitempty"`
 	Title         string                 `protobuf:"bytes,5,opt,name=title,proto3" json:"title,omitempty"`
@@ -847,7 +847,7 @@ type Finding struct {
 
 func (x *Finding) Reset() {
 	*x = Finding{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[8]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +859,7 @@ func (x *Finding) String() string {
 func (*Finding) ProtoMessage() {}
 
 func (x *Finding) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[8]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -872,7 +872,7 @@ func (x *Finding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Finding.ProtoReflect.Descriptor instead.
 func (*Finding) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{8}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Finding) GetRule() string {
@@ -933,9 +933,9 @@ func (x *Finding) GetFixSql() string {
 
 type GetCheckVerdictResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ready is false while Stratum is still evaluating.
+	// ready is false while DbProof is still evaluating.
 	Ready        bool       `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
-	Conclusion   Conclusion `protobuf:"varint,2,opt,name=conclusion,proto3,enum=stratum.agent.v1.Conclusion" json:"conclusion,omitempty"`
+	Conclusion   Conclusion `protobuf:"varint,2,opt,name=conclusion,proto3,enum=dbproof.agent.v1.Conclusion" json:"conclusion,omitempty"`
 	Findings     []*Finding `protobuf:"bytes,3,rep,name=findings,proto3" json:"findings,omitempty"`
 	SetupProblem string     `protobuf:"bytes,4,opt,name=setup_problem,json=setupProblem,proto3" json:"setup_problem,omitempty"`
 	// details_url is the check's page in the console.
@@ -946,7 +946,7 @@ type GetCheckVerdictResponse struct {
 
 func (x *GetCheckVerdictResponse) Reset() {
 	*x = GetCheckVerdictResponse{}
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[9]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -958,7 +958,7 @@ func (x *GetCheckVerdictResponse) String() string {
 func (*GetCheckVerdictResponse) ProtoMessage() {}
 
 func (x *GetCheckVerdictResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stratum_agent_v1_check_proto_msgTypes[9]
+	mi := &file_dbproof_agent_v1_check_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -971,7 +971,7 @@ func (x *GetCheckVerdictResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCheckVerdictResponse.ProtoReflect.Descriptor instead.
 func (*GetCheckVerdictResponse) Descriptor() ([]byte, []int) {
-	return file_stratum_agent_v1_check_proto_rawDescGZIP(), []int{9}
+	return file_dbproof_agent_v1_check_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetCheckVerdictResponse) GetReady() bool {
@@ -1009,11 +1009,11 @@ func (x *GetCheckVerdictResponse) GetDetailsUrl() string {
 	return ""
 }
 
-var File_stratum_agent_v1_check_proto protoreflect.FileDescriptor
+var File_dbproof_agent_v1_check_proto protoreflect.FileDescriptor
 
-const file_stratum_agent_v1_check_proto_rawDesc = "" +
+const file_dbproof_agent_v1_check_proto_rawDesc = "" +
 	"\n" +
-	"\x1cstratum/agent/v1/check.proto\x12\x10stratum.agent.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1estratum/agent/v1/capture.proto\"\xe9\x01\n" +
+	"\x1cdbproof/agent/v1/check.proto\x12\x10dbproof.agent.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edbproof/agent/v1/capture.proto\"\xe9\x01\n" +
 	"\vPullRequest\x12\x1f\n" +
 	"\x06number\x18\x01 \x01(\x05B\a\xbaH\x04\x1a\x02 \x00R\x06number\x12\x1e\n" +
 	"\x05title\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\bR\x05title\x12\x1f\n" +
@@ -1026,7 +1026,7 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\x11BeginCheckRequest\x12$\n" +
 	"\aproject\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x03\x18\xc9\x01R\aproject\x12H\n" +
-	"\fpull_request\x18\x02 \x01(\v2\x1d.stratum.agent.v1.PullRequestB\x06\xbaH\x03\xc8\x01\x01R\vpullRequest\x12&\n" +
+	"\fpull_request\x18\x02 \x01(\v2\x1d.dbproof.agent.v1.PullRequestB\x06\xbaH\x03\xc8\x01\x01R\vpullRequest\x12&\n" +
 	"\x0fworkflow_run_id\x18\x03 \x01(\x03R\rworkflowRunId\x12\x1f\n" +
 	"\vrun_attempt\x18\x04 \x01(\x05R\n" +
 	"runAttempt\x12,\n" +
@@ -1036,28 +1036,28 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\bcheck_id\x18\x01 \x01(\tR\acheckId\x12\x1a\n" +
 	"\bsnapshot\x18\x02 \x01(\fR\bsnapshot\x12)\n" +
 	"\x10snapshot_version\x18\x03 \x01(\tR\x0fsnapshotVersion\x123\n" +
-	"\x04tool\x18\x04 \x01(\x0e2\x1f.stratum.agent.v1.MigrationToolR\x04tool\x12*\n" +
+	"\x04tool\x18\x04 \x01(\x0e2\x1f.dbproof.agent.v1.MigrationToolR\x04tool\x12*\n" +
 	"\x11min_agent_version\x18\x05 \x01(\tR\x0fminAgentVersion\"\x89\x01\n" +
 	"\x04Step\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06detail\x18\x02 \x01(\tR\x06detail\x124\n" +
-	"\x06status\x18\x03 \x01(\x0e2\x1c.stratum.agent.v1.StepStatusR\x06status\x12\x1f\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1c.dbproof.agent.v1.StepStatusR\x06status\x12\x1f\n" +
 	"\vduration_ms\x18\x04 \x01(\x03R\n" +
 	"durationMs\"\xd0\x01\n" +
 	"\tMigration\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x12\n" +
 	"\x04file\x18\x02 \x01(\tR\x04file\x129\n" +
-	"\x06source\x18\x03 \x01(\x0e2!.stratum.agent.v1.MigrationSourceR\x06source\x12\x10\n" +
+	"\x06source\x18\x03 \x01(\x0e2!.dbproof.agent.v1.MigrationSourceR\x06source\x12\x10\n" +
 	"\x03sql\x18\x04 \x01(\tR\x03sql\x12\x18\n" +
 	"\aapplied\x18\x05 \x01(\bR\aapplied\x12\x14\n" +
 	"\x05error\x18\x06 \x01(\tR\x05error\x12\x18\n" +
 	"\achanges\x18\a \x01(\fR\achanges\"\xc1\x02\n" +
 	"\x12ReportCheckRequest\x12#\n" +
 	"\bcheck_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\acheckId\x12,\n" +
-	"\x05steps\x18\x02 \x03(\v2\x16.stratum.agent.v1.StepR\x05steps\x12#\n" +
+	"\x05steps\x18\x02 \x03(\v2\x16.dbproof.agent.v1.StepR\x05steps\x12#\n" +
 	"\rsetup_problem\x18\x03 \x01(\tR\fsetupProblem\x12;\n" +
 	"\n" +
-	"migrations\x18\x04 \x03(\v2\x1b.stratum.agent.v1.MigrationR\n" +
+	"migrations\x18\x04 \x03(\v2\x1b.dbproof.agent.v1.MigrationR\n" +
 	"migrations\x120\n" +
 	"\x14applied_file_changed\x18\x05 \x03(\tR\x12appliedFileChanged\x12#\n" +
 	"\rresult_schema\x18\x06 \x01(\fR\fresultSchema\x12\x1f\n" +
@@ -1068,7 +1068,7 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\bcheck_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\acheckId\"\xd6\x01\n" +
 	"\aFinding\x12\x12\n" +
 	"\x04rule\x18\x01 \x01(\tR\x04rule\x126\n" +
-	"\bseverity\x18\x02 \x01(\x0e2\x1a.stratum.agent.v1.SeverityR\bseverity\x12\x12\n" +
+	"\bseverity\x18\x02 \x01(\x0e2\x1a.dbproof.agent.v1.SeverityR\bseverity\x12\x12\n" +
 	"\x04file\x18\x03 \x01(\tR\x04file\x12\x12\n" +
 	"\x04line\x18\x04 \x01(\x05R\x04line\x12\x14\n" +
 	"\x05title\x18\x05 \x01(\tR\x05title\x12\x16\n" +
@@ -1078,9 +1078,9 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\x17GetCheckVerdictResponse\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12<\n" +
 	"\n" +
-	"conclusion\x18\x02 \x01(\x0e2\x1c.stratum.agent.v1.ConclusionR\n" +
+	"conclusion\x18\x02 \x01(\x0e2\x1c.dbproof.agent.v1.ConclusionR\n" +
 	"conclusion\x125\n" +
-	"\bfindings\x18\x03 \x03(\v2\x19.stratum.agent.v1.FindingR\bfindings\x12#\n" +
+	"\bfindings\x18\x03 \x03(\v2\x19.dbproof.agent.v1.FindingR\bfindings\x12#\n" +
 	"\rsetup_problem\x18\x04 \x01(\tR\fsetupProblem\x12\x1f\n" +
 	"\vdetails_url\x18\x05 \x01(\tR\n" +
 	"detailsUrl*\x8d\x01\n" +
@@ -1108,59 +1108,59 @@ const file_stratum_agent_v1_check_proto_rawDesc = "" +
 	"\x0eSEVERITY_ERROR\x10\x022\xab\x02\n" +
 	"\fCheckService\x12W\n" +
 	"\n" +
-	"BeginCheck\x12#.stratum.agent.v1.BeginCheckRequest\x1a$.stratum.agent.v1.BeginCheckResponse\x12Z\n" +
-	"\vReportCheck\x12$.stratum.agent.v1.ReportCheckRequest\x1a%.stratum.agent.v1.ReportCheckResponse\x12f\n" +
-	"\x0fGetCheckVerdict\x12(.stratum.agent.v1.GetCheckVerdictRequest\x1a).stratum.agent.v1.GetCheckVerdictResponseB\xc6\x01\n" +
-	"\x14com.stratum.agent.v1B\n" +
-	"CheckProtoP\x01Z@github.com/borovikovd/stratum-agent/gen/stratum/agent/v1;agentv1\xa2\x02\x03SAX\xaa\x02\x10Stratum.Agent.V1\xca\x02\x10Stratum\\Agent\\V1\xe2\x02\x1cStratum\\Agent\\V1\\GPBMetadata\xea\x02\x12Stratum::Agent::V1b\x06proto3"
+	"BeginCheck\x12#.dbproof.agent.v1.BeginCheckRequest\x1a$.dbproof.agent.v1.BeginCheckResponse\x12Z\n" +
+	"\vReportCheck\x12$.dbproof.agent.v1.ReportCheckRequest\x1a%.dbproof.agent.v1.ReportCheckResponse\x12f\n" +
+	"\x0fGetCheckVerdict\x12(.dbproof.agent.v1.GetCheckVerdictRequest\x1a).dbproof.agent.v1.GetCheckVerdictResponseB\xc6\x01\n" +
+	"\x14com.dbproof.agent.v1B\n" +
+	"CheckProtoP\x01Z@github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
 
 var (
-	file_stratum_agent_v1_check_proto_rawDescOnce sync.Once
-	file_stratum_agent_v1_check_proto_rawDescData []byte
+	file_dbproof_agent_v1_check_proto_rawDescOnce sync.Once
+	file_dbproof_agent_v1_check_proto_rawDescData []byte
 )
 
-func file_stratum_agent_v1_check_proto_rawDescGZIP() []byte {
-	file_stratum_agent_v1_check_proto_rawDescOnce.Do(func() {
-		file_stratum_agent_v1_check_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stratum_agent_v1_check_proto_rawDesc), len(file_stratum_agent_v1_check_proto_rawDesc)))
+func file_dbproof_agent_v1_check_proto_rawDescGZIP() []byte {
+	file_dbproof_agent_v1_check_proto_rawDescOnce.Do(func() {
+		file_dbproof_agent_v1_check_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_dbproof_agent_v1_check_proto_rawDesc), len(file_dbproof_agent_v1_check_proto_rawDesc)))
 	})
-	return file_stratum_agent_v1_check_proto_rawDescData
+	return file_dbproof_agent_v1_check_proto_rawDescData
 }
 
-var file_stratum_agent_v1_check_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_stratum_agent_v1_check_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
-var file_stratum_agent_v1_check_proto_goTypes = []any{
-	(StepStatus)(0),                 // 0: stratum.agent.v1.StepStatus
-	(MigrationSource)(0),            // 1: stratum.agent.v1.MigrationSource
-	(Conclusion)(0),                 // 2: stratum.agent.v1.Conclusion
-	(Severity)(0),                   // 3: stratum.agent.v1.Severity
-	(*PullRequest)(nil),             // 4: stratum.agent.v1.PullRequest
-	(*BeginCheckRequest)(nil),       // 5: stratum.agent.v1.BeginCheckRequest
-	(*BeginCheckResponse)(nil),      // 6: stratum.agent.v1.BeginCheckResponse
-	(*Step)(nil),                    // 7: stratum.agent.v1.Step
-	(*Migration)(nil),               // 8: stratum.agent.v1.Migration
-	(*ReportCheckRequest)(nil),      // 9: stratum.agent.v1.ReportCheckRequest
-	(*ReportCheckResponse)(nil),     // 10: stratum.agent.v1.ReportCheckResponse
-	(*GetCheckVerdictRequest)(nil),  // 11: stratum.agent.v1.GetCheckVerdictRequest
-	(*Finding)(nil),                 // 12: stratum.agent.v1.Finding
-	(*GetCheckVerdictResponse)(nil), // 13: stratum.agent.v1.GetCheckVerdictResponse
-	(MigrationTool)(0),              // 14: stratum.agent.v1.MigrationTool
+var file_dbproof_agent_v1_check_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_dbproof_agent_v1_check_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_dbproof_agent_v1_check_proto_goTypes = []any{
+	(StepStatus)(0),                 // 0: dbproof.agent.v1.StepStatus
+	(MigrationSource)(0),            // 1: dbproof.agent.v1.MigrationSource
+	(Conclusion)(0),                 // 2: dbproof.agent.v1.Conclusion
+	(Severity)(0),                   // 3: dbproof.agent.v1.Severity
+	(*PullRequest)(nil),             // 4: dbproof.agent.v1.PullRequest
+	(*BeginCheckRequest)(nil),       // 5: dbproof.agent.v1.BeginCheckRequest
+	(*BeginCheckResponse)(nil),      // 6: dbproof.agent.v1.BeginCheckResponse
+	(*Step)(nil),                    // 7: dbproof.agent.v1.Step
+	(*Migration)(nil),               // 8: dbproof.agent.v1.Migration
+	(*ReportCheckRequest)(nil),      // 9: dbproof.agent.v1.ReportCheckRequest
+	(*ReportCheckResponse)(nil),     // 10: dbproof.agent.v1.ReportCheckResponse
+	(*GetCheckVerdictRequest)(nil),  // 11: dbproof.agent.v1.GetCheckVerdictRequest
+	(*Finding)(nil),                 // 12: dbproof.agent.v1.Finding
+	(*GetCheckVerdictResponse)(nil), // 13: dbproof.agent.v1.GetCheckVerdictResponse
+	(MigrationTool)(0),              // 14: dbproof.agent.v1.MigrationTool
 }
-var file_stratum_agent_v1_check_proto_depIdxs = []int32{
-	4,  // 0: stratum.agent.v1.BeginCheckRequest.pull_request:type_name -> stratum.agent.v1.PullRequest
-	14, // 1: stratum.agent.v1.BeginCheckResponse.tool:type_name -> stratum.agent.v1.MigrationTool
-	0,  // 2: stratum.agent.v1.Step.status:type_name -> stratum.agent.v1.StepStatus
-	1,  // 3: stratum.agent.v1.Migration.source:type_name -> stratum.agent.v1.MigrationSource
-	7,  // 4: stratum.agent.v1.ReportCheckRequest.steps:type_name -> stratum.agent.v1.Step
-	8,  // 5: stratum.agent.v1.ReportCheckRequest.migrations:type_name -> stratum.agent.v1.Migration
-	3,  // 6: stratum.agent.v1.Finding.severity:type_name -> stratum.agent.v1.Severity
-	2,  // 7: stratum.agent.v1.GetCheckVerdictResponse.conclusion:type_name -> stratum.agent.v1.Conclusion
-	12, // 8: stratum.agent.v1.GetCheckVerdictResponse.findings:type_name -> stratum.agent.v1.Finding
-	5,  // 9: stratum.agent.v1.CheckService.BeginCheck:input_type -> stratum.agent.v1.BeginCheckRequest
-	9,  // 10: stratum.agent.v1.CheckService.ReportCheck:input_type -> stratum.agent.v1.ReportCheckRequest
-	11, // 11: stratum.agent.v1.CheckService.GetCheckVerdict:input_type -> stratum.agent.v1.GetCheckVerdictRequest
-	6,  // 12: stratum.agent.v1.CheckService.BeginCheck:output_type -> stratum.agent.v1.BeginCheckResponse
-	10, // 13: stratum.agent.v1.CheckService.ReportCheck:output_type -> stratum.agent.v1.ReportCheckResponse
-	13, // 14: stratum.agent.v1.CheckService.GetCheckVerdict:output_type -> stratum.agent.v1.GetCheckVerdictResponse
+var file_dbproof_agent_v1_check_proto_depIdxs = []int32{
+	4,  // 0: dbproof.agent.v1.BeginCheckRequest.pull_request:type_name -> dbproof.agent.v1.PullRequest
+	14, // 1: dbproof.agent.v1.BeginCheckResponse.tool:type_name -> dbproof.agent.v1.MigrationTool
+	0,  // 2: dbproof.agent.v1.Step.status:type_name -> dbproof.agent.v1.StepStatus
+	1,  // 3: dbproof.agent.v1.Migration.source:type_name -> dbproof.agent.v1.MigrationSource
+	7,  // 4: dbproof.agent.v1.ReportCheckRequest.steps:type_name -> dbproof.agent.v1.Step
+	8,  // 5: dbproof.agent.v1.ReportCheckRequest.migrations:type_name -> dbproof.agent.v1.Migration
+	3,  // 6: dbproof.agent.v1.Finding.severity:type_name -> dbproof.agent.v1.Severity
+	2,  // 7: dbproof.agent.v1.GetCheckVerdictResponse.conclusion:type_name -> dbproof.agent.v1.Conclusion
+	12, // 8: dbproof.agent.v1.GetCheckVerdictResponse.findings:type_name -> dbproof.agent.v1.Finding
+	5,  // 9: dbproof.agent.v1.CheckService.BeginCheck:input_type -> dbproof.agent.v1.BeginCheckRequest
+	9,  // 10: dbproof.agent.v1.CheckService.ReportCheck:input_type -> dbproof.agent.v1.ReportCheckRequest
+	11, // 11: dbproof.agent.v1.CheckService.GetCheckVerdict:input_type -> dbproof.agent.v1.GetCheckVerdictRequest
+	6,  // 12: dbproof.agent.v1.CheckService.BeginCheck:output_type -> dbproof.agent.v1.BeginCheckResponse
+	10, // 13: dbproof.agent.v1.CheckService.ReportCheck:output_type -> dbproof.agent.v1.ReportCheckResponse
+	13, // 14: dbproof.agent.v1.CheckService.GetCheckVerdict:output_type -> dbproof.agent.v1.GetCheckVerdictResponse
 	12, // [12:15] is the sub-list for method output_type
 	9,  // [9:12] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
@@ -1168,28 +1168,28 @@ var file_stratum_agent_v1_check_proto_depIdxs = []int32{
 	0,  // [0:9] is the sub-list for field type_name
 }
 
-func init() { file_stratum_agent_v1_check_proto_init() }
-func file_stratum_agent_v1_check_proto_init() {
-	if File_stratum_agent_v1_check_proto != nil {
+func init() { file_dbproof_agent_v1_check_proto_init() }
+func file_dbproof_agent_v1_check_proto_init() {
+	if File_dbproof_agent_v1_check_proto != nil {
 		return
 	}
-	file_stratum_agent_v1_capture_proto_init()
+	file_dbproof_agent_v1_capture_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stratum_agent_v1_check_proto_rawDesc), len(file_stratum_agent_v1_check_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dbproof_agent_v1_check_proto_rawDesc), len(file_dbproof_agent_v1_check_proto_rawDesc)),
 			NumEnums:      4,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_stratum_agent_v1_check_proto_goTypes,
-		DependencyIndexes: file_stratum_agent_v1_check_proto_depIdxs,
-		EnumInfos:         file_stratum_agent_v1_check_proto_enumTypes,
-		MessageInfos:      file_stratum_agent_v1_check_proto_msgTypes,
+		GoTypes:           file_dbproof_agent_v1_check_proto_goTypes,
+		DependencyIndexes: file_dbproof_agent_v1_check_proto_depIdxs,
+		EnumInfos:         file_dbproof_agent_v1_check_proto_enumTypes,
+		MessageInfos:      file_dbproof_agent_v1_check_proto_msgTypes,
 	}.Build()
-	File_stratum_agent_v1_check_proto = out.File
-	file_stratum_agent_v1_check_proto_goTypes = nil
-	file_stratum_agent_v1_check_proto_depIdxs = nil
+	File_dbproof_agent_v1_check_proto = out.File
+	file_dbproof_agent_v1_check_proto_goTypes = nil
+	file_dbproof_agent_v1_check_proto_depIdxs = nil
 }

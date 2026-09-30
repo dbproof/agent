@@ -1,6 +1,6 @@
 # Schema engine
 
-The `schema` package inspects a Postgres schema, diffs two schemas and generates DDL. Stratum's server imports the same package, so a capture, a check and a drift comparison all agree on what a schema is.
+The `schema` package inspects a Postgres schema, diffs two schemas and generates DDL. DbProof's server imports the same package, so a capture, a check and a drift comparison all agree on what a schema is.
 
 ## Why not a library
 

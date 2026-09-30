@@ -1,6 +1,6 @@
-// Command stratum is Stratum's agent: it captures the production schema and
+// Command dbproof is DbProof's agent: it captures the production schema and
 // checks pull request migrations against it. It never fails a deploy: when
-// Stratum is unreachable it warns and exits successfully.
+// DbProof is unreachable it warns and exits successfully.
 package main
 
 import (
@@ -11,14 +11,14 @@ import (
 // version is set at release time with -ldflags "-X main.version=...".
 var version = "dev"
 
-const usage = `Usage: stratum <command> [flags]
+const usage = `Usage: dbproof <command> [flags]
 
 Commands:
   capture   capture the production schema, statistics and migration history
   check     test a pull request's migrations against the latest snapshot
   version   print the agent version
 
-Run "stratum <command> -h" for a command's flags.
+Run "dbproof <command> -h" for a command's flags.
 `
 
 func main() {

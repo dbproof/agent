@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// Audience is the audience Stratum expects in a check's OIDC token.
-const Audience = "stratum"
+// Audience is the audience DbProof expects in a check's OIDC token.
+const Audience = "dbproof"
 
 // ActionsOIDCToken asks GitHub Actions for an identity token for this
 // workflow run. The workflow needs `permissions: id-token: write`.

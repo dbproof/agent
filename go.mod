@@ -1,4 +1,4 @@
-module github.com/borovikovd/stratum-agent
+module github.com/borovikovd/dbproof-agent
 
 go 1.27.1
 

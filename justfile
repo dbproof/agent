@@ -1,4 +1,4 @@
-# Stratum agent. Tests need the Postgres servers from compose.yaml.
+# DbProof agent. Tests need the Postgres servers from compose.yaml.
 
 golangci_version := "v2.14.0"
 

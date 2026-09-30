@@ -3,7 +3,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/borovikovd/stratum-agent/gen
+      value: github.com/borovikovd/dbproof-agent/gen
   disable:
     - file_option: go_package
       module: buf.build/bufbuild/protovalidate

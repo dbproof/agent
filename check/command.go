@@ -9,13 +9,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // CommandMigrator runs the customer's own migrate command, such as
 // `flyway migrate` or `atlas migrate apply`, through the shell. The target
 // flag for each version is appended, and the command finds the throwaway
-// database in STRATUM_CHECK_* variables.
+// database in DBPROOF_CHECK_* variables.
 type CommandMigrator struct {
 	Command string
 	Tool    snapshot.Tool
@@ -24,7 +24,7 @@ type CommandMigrator struct {
 }
 
 // Env returns the variables the command sees, so a command can say
-// -url=$STRATUM_CHECK_JDBC_URL or --url "$STRATUM_CHECK_DSN".
+// -url=$DBPROOF_CHECK_JDBC_URL or --url "$DBPROOF_CHECK_DSN".
 func (m CommandMigrator) Env() ([]string, error) {
 	u, err := url.Parse(m.DSN)
 	if err != nil {
@@ -37,13 +37,13 @@ func (m CommandMigrator) Env() ([]string, error) {
 	}
 	db := strings.TrimPrefix(u.Path, "/")
 	return []string{
-		"STRATUM_CHECK_DSN=" + m.DSN,
-		"STRATUM_CHECK_JDBC_URL=jdbc:postgresql://" + u.Hostname() + ":" + port + "/" + db,
-		"STRATUM_CHECK_HOST=" + u.Hostname(),
-		"STRATUM_CHECK_PORT=" + port,
-		"STRATUM_CHECK_DB=" + db,
-		"STRATUM_CHECK_USER=" + u.User.Username(),
-		"STRATUM_CHECK_PASSWORD=" + password,
+		"DBPROOF_CHECK_DSN=" + m.DSN,
+		"DBPROOF_CHECK_JDBC_URL=jdbc:postgresql://" + u.Hostname() + ":" + port + "/" + db,
+		"DBPROOF_CHECK_HOST=" + u.Hostname(),
+		"DBPROOF_CHECK_PORT=" + port,
+		"DBPROOF_CHECK_DB=" + db,
+		"DBPROOF_CHECK_USER=" + u.User.Username(),
+		"DBPROOF_CHECK_PASSWORD=" + password,
 		// Flyway reads these when the command doesn't say where to migrate,
 		// ahead of a flyway.conf that could name another database.
 		"FLYWAY_URL=jdbc:postgresql://" + u.Hostname() + ":" + port + "/" + db,

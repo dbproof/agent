@@ -18,7 +18,7 @@ import (
 
 // CaptureRole is a login role with no privileges beyond the defaults, for
 // tests of what capture sees without reading the application's tables.
-const CaptureRole = "stratum_capture"
+const CaptureRole = "dbproof_capture"
 
 // Server is one Postgres server to test against.
 type Server struct {
@@ -27,7 +27,7 @@ type Server struct {
 	Major int
 }
 
-// Servers returns the servers listed in STRATUM_TEST_PG (comma-separated
+// Servers returns the servers listed in DBPROOF_TEST_PG (comma-separated
 // admin URLs), defaulting to the compose.yaml servers. Tests that need them
 // are skipped with -short.
 func Servers(t testing.TB) []Server {
@@ -35,7 +35,7 @@ func Servers(t testing.TB) []Server {
 	if testing.Short() {
 		t.Skip("needs Postgres; run without -short after docker compose up -d")
 	}
-	list := os.Getenv("STRATUM_TEST_PG")
+	list := os.Getenv("DBPROOF_TEST_PG")
 	if list == "" {
 		list = "postgres://postgres:postgres@localhost:54313/postgres,postgres://postgres:postgres@localhost:54318/postgres"
 	}

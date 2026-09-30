@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/stratum-agent/schema"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // Config says what to capture.

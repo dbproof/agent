@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package stratum.agent.v1;
+package dbproof.agent.v1;
 
 import "buf/validate/validate.proto";
-import "stratum/agent/v1/capture.proto";
+import "dbproof/agent/v1/capture.proto";
 
 // CheckService runs a pull request check. The check action authenticates
 // with its GitHub Actions OIDC token, whose repository must own the project;
@@ -12,10 +12,10 @@ import "stratum/agent/v1/capture.proto";
 service CheckService {
   // BeginCheck registers a check run and returns the snapshot to restore.
   rpc BeginCheck(BeginCheckRequest) returns (BeginCheckResponse);
-  // ReportCheck sends what happened in the runner. Stratum evaluates the
+  // ReportCheck sends what happened in the runner. DbProof evaluates the
   // rules afterwards; poll GetCheckVerdict for the result.
   rpc ReportCheck(ReportCheckRequest) returns (ReportCheckResponse);
-  // GetCheckVerdict returns the verdict once Stratum has one.
+  // GetCheckVerdict returns the verdict once DbProof has one.
   rpc GetCheckVerdict(GetCheckVerdictRequest) returns (GetCheckVerdictResponse);
 }
 
@@ -146,7 +146,7 @@ message Finding {
 }
 
 message GetCheckVerdictResponse {
-  // ready is false while Stratum is still evaluating.
+  // ready is false while DbProof is still evaluating.
   bool ready = 1;
   Conclusion conclusion = 2;
   repeated Finding findings = 3;

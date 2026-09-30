@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/borovikovd/stratum-agent/capture"
-	"github.com/borovikovd/stratum-agent/internal/pgtest"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/capture"
+	"github.com/borovikovd/dbproof-agent/internal/pgtest"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // seed fills billing with history and rows, and gathers statistics.

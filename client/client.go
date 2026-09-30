@@ -1,4 +1,4 @@
-// Package client talks to Stratum's agent API. Every call carries a deadline
+// Package client talks to DbProof's agent API. Every call carries a deadline
 // and retries transient failures; callers decide what an error means, and the
 // CLI never lets one fail a deploy.
 package client
@@ -11,12 +11,12 @@ import (
 
 	"connectrpc.com/connect"
 
-	agentv1 "github.com/borovikovd/stratum-agent/gen/stratum/agent/v1"
-	"github.com/borovikovd/stratum-agent/gen/stratum/agent/v1/agentv1connect"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
+	"github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1/agentv1connect"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
-// Client is an authenticated connection to Stratum.
+// Client is an authenticated connection to DbProof.
 type Client struct {
 	Capture agentv1connect.CaptureServiceClient
 	Check   agentv1connect.CheckServiceClient
@@ -24,20 +24,20 @@ type Client struct {
 
 // Options configures a Client.
 type Options struct {
-	// BaseURL is Stratum's address, e.g. https://stratum.example.com.
+	// BaseURL is DbProof's address, e.g. https://dbproof.example.com.
 	BaseURL string
 	// Token is sent as a bearer token: the capture token, or the check's
 	// GitHub Actions OIDC token.
 	Token string
-	// Project names the project ("org/slug") for Stratum's local dev mode,
+	// Project names the project ("org/slug") for DbProof's local dev mode,
 	// where one fixed token serves every project.
 	Project string
 }
 
 // ProjectHeader carries Options.Project.
-const ProjectHeader = "Stratum-Project"
+const ProjectHeader = "DbProof-Project"
 
-// New returns a client for Stratum's agent API, served under /ingest.
+// New returns a client for DbProof's agent API, served under /ingest.
 func New(opts Options) *Client {
 	httpClient := &http.Client{Timeout: 2 * time.Minute}
 	interceptors := connect.WithInterceptors(authInterceptor(opts.Token, opts.Project), retryInterceptor())

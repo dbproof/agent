@@ -11,11 +11,11 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/stratum-agent/capture"
-	"github.com/borovikovd/stratum-agent/check"
-	"github.com/borovikovd/stratum-agent/internal/pgtest"
-	"github.com/borovikovd/stratum-agent/schema"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/capture"
+	"github.com/borovikovd/dbproof-agent/check"
+	"github.com/borovikovd/dbproof-agent/internal/pgtest"
+	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // flywayLike applies migration files up to a target the way Flyway would:
@@ -62,8 +62,8 @@ func production(t *testing.T, server pgtest.Server) *snapshot.Snapshot {
 		  (1, '1', 'init', 'SQL', 'V1__init.sql', 1, 'deploy', now(), 1, true),
 		  (2, '2', 'payments', 'SQL', 'V2__payments.sql', 1, 'deploy', now(), 1, true),
 		  (3, '3', 'credit notes', 'SQL', 'V3__credit_notes.sql', 1, 'deploy', now(), 1, true);
-		CREATE SCHEMA stratum;
-		CREATE FUNCTION stratum.table_stats() RETURNS TABLE (schema_name text, table_name text, n_rows real, column_name text, null_frac real, n_distinct real, avg_width integer)
+		CREATE SCHEMA dbproof;
+		CREATE FUNCTION dbproof.table_stats() RETURNS TABLE (schema_name text, table_name text, n_rows real, column_name text, null_frac real, n_distinct real, avg_width integer)
 		  LANGUAGE sql AS $$ SELECT NULL::text, NULL::text, NULL::real, NULL::text, NULL::real, NULL::real, NULL::integer WHERE false $$;`)
 	snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolFlyway})
 	if err != nil {

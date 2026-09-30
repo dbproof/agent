@@ -17,9 +17,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/stratum-agent/capture"
-	"github.com/borovikovd/stratum-agent/schema"
-	"github.com/borovikovd/stratum-agent/snapshot"
+	"github.com/borovikovd/dbproof-agent/capture"
+	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/borovikovd/dbproof-agent/snapshot"
 )
 
 // Migrator applies migrations up to and including a version. CommandMigrator
@@ -74,7 +74,7 @@ type Migration struct {
 	Changes         []schema.Change
 }
 
-// Report is everything the check sends to Stratum.
+// Report is everything the check sends to DbProof.
 type Report struct {
 	Steps              []Step
 	SetupProblem       string
@@ -168,7 +168,7 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 			m := &group.migrations[i]
 			next, changedFiles, err := r.apply(ctx, cfg, m, current)
 			if errors.Is(err, errNotRecorded) {
-				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show V%s, so it ran against another database. Point it at the check database: -url=$STRATUM_CHECK_JDBC_URL for Flyway, --url \"$STRATUM_CHECK_DSN\" for Atlas.", m.Version), stepStart)
+				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show V%s, so it ran against another database. Point it at the check database: -url=$DBPROOF_CHECK_JDBC_URL for Flyway, --url \"$DBPROOF_CHECK_DSN\" for Atlas.", m.Version), stepStart)
 				return done(), nil
 			}
 			if err != nil {

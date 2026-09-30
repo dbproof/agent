@@ -1,4 +1,4 @@
--- One of every object on Stratum's capture list, across two schemas. Must load
+-- One of every object on DbProof's capture list, across two schemas. Must load
 -- on every supported major (13 through 18).
 CREATE EXTENSION IF NOT EXISTS citext;
 CREATE EXTENSION IF NOT EXISTS btree_gist;
