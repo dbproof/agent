@@ -16,8 +16,17 @@ inputs:
     description: DbProof's address.
     required: true
   database:
-    description: postgres:// URL of an empty throwaway database, as a superuser.
-    default: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+    description: >-
+      postgres:// URL of an empty throwaway database, as a superuser. By
+      default the check starts postgres-image in Docker instead.
+    default: ""
+  postgres-image:
+    description: >-
+      The Docker image the check starts when no database is given. {major} is
+      production's Postgres major version, so the check runs on the version
+      production does; use an image with your extensions, e.g.
+      pgvector/pgvector:pg{major}.
+    default: postgres:{major}
   fail-on-unreachable:
     description: Fail instead of passing with a warning when DbProof is unreachable.
     default: "false"
@@ -45,6 +54,7 @@ runs:
         DBPROOF_URL: ${{ inputs.dbproof-url }}
         DBPROOF_PROJECT: ${{ inputs.project }}
         DBPROOF_CHECK_DSN: ${{ inputs.database }}
+        DBPROOF_POSTGRES_IMAGE: ${{ inputs.postgres-image }}
         MIGRATIONS_DIR: ${{ inputs.migrations-dir }}
         MIGRATE_COMMAND: ${{ inputs.migrate-command }}
         FAIL_ON_UNREACHABLE: ${{ inputs.fail-on-unreachable }}

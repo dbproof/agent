@@ -98,7 +98,7 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	stepStart := time.Now()
 	restoreName := "Restored snapshot " + cfg.SnapshotLabel
 	if want := cfg.Snapshot.Schema.Major(); want != major {
-		r.setup(restoreName, fmt.Sprintf("Production runs Postgres %d but the check database is Postgres %d. Use a Postgres %d service container.", want, major, want), stepStart)
+		r.setup(restoreName, fmt.Sprintf("Production runs Postgres %d but the check database is Postgres %d. Point the check at a Postgres %d database, or leave database unset and the check starts one.", want, major, want), stepStart)
 		return done(), nil
 	}
 	if err := restore(ctx, cfg.Conn, cfg.Snapshot); err != nil {

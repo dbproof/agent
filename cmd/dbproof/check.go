@@ -28,10 +28,10 @@ var errUnavailable = errors.New("dbproof unavailable")
 const unavailableMessage = "DbProof unavailable, check skipped."
 
 type checkFlags struct {
-	project, database, migrationsDir, migrateCommand, prFiles, baseRef, repoRoot string
-	verdictTimeout                                                               time.Duration
-	failOnUnreachable                                                            bool
-	pr                                                                           pullRequest
+	project, database, postgresImage, migrationsDir, migrateCommand, prFiles, baseRef, repoRoot string
+	verdictTimeout                                                                              time.Duration
+	failOnUnreachable                                                                           bool
+	pr                                                                                          pullRequest
 }
 
 // runCheck runs the pull request check and returns the exit code: 1 only
@@ -41,7 +41,8 @@ func runCheck(args []string) int {
 	var f checkFlags
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.StringVar(&f.project, "project", os.Getenv("DBPROOF_PROJECT"), "the DbProof project, org/slug")
-	fs.StringVar(&f.database, "database", os.Getenv("DBPROOF_CHECK_DSN"), "postgres:// URL of an empty throwaway database, as a superuser")
+	fs.StringVar(&f.database, "database", os.Getenv("DBPROOF_CHECK_DSN"), "postgres:// URL of an empty throwaway database, as a superuser; default: start -postgres-image in Docker")
+	fs.StringVar(&f.postgresImage, "postgres-image", envOr("DBPROOF_POSTGRES_IMAGE", "postgres:{major}"), "the Docker image the check starts when there's no -database; {major} is production's Postgres major version")
 	fs.StringVar(&f.migrationsDir, "migrations-dir", "", "the migrations folder")
 	fs.StringVar(&f.migrateCommand, "migrate-command", "", "your migrate command, e.g. flyway -url=$DBPROOF_CHECK_JDBC_URL -user=$DBPROOF_CHECK_USER -password=$DBPROOF_CHECK_PASSWORD migrate")
 	fs.StringVar(&f.prFiles, "pull-request-files", "", "comma-separated migration files the pull request adds or changes, relative to the working directory; default: git diff against -base-ref")
@@ -53,8 +54,8 @@ func runCheck(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if f.project == "" || f.database == "" || f.migrationsDir == "" || f.migrateCommand == "" {
-		fmt.Fprintln(os.Stderr, "dbproof check: -project, -database, -migrations-dir and -migrate-command are required")
+	if f.project == "" || f.migrationsDir == "" || f.migrateCommand == "" {
+		fmt.Fprintln(os.Stderr, "dbproof check: -project, -migrations-dir and -migrate-command are required")
 		return 2
 	}
 	dbproofURL := os.Getenv("DBPROOF_URL")
@@ -126,6 +127,15 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 		return nil, err
 	}
 
+	if f.database == "" {
+		// Production's major, so migrations behave as they will there.
+		pg, err := startPostgres(ctx, f.postgresImage, snap.Schema.Major())
+		if err != nil {
+			return nil, err
+		}
+		defer pg.stop()
+		f.database = pg.dsn
+	}
 	conn, err := pgx.Connect(ctx, f.database)
 	if err != nil {
 		return nil, fmt.Errorf("connect to the check database: %w", err)

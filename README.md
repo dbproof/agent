@@ -8,7 +8,7 @@ Licensed under Apache-2.0 so security teams can audit exactly what runs in their
 
 DbProof's setup pull request adds workflows that use two actions from this repository, pinned by commit:
 
-- `actions/check` runs on pull requests: it restores the latest snapshot into the job's throwaway Postgres, applies the pull request's migrations one version at a time with your migrate command, and reports DbProof's verdict. It authenticates with the job's GitHub OIDC token (`permissions: id-token: write`), so pull request workflows hold no DbProof secret.
+- `actions/check` runs on pull requests: it starts a throwaway Postgres in Docker on production's major version (`postgres-image`, default `postgres:{major}`, or your own empty `database`), restores the latest snapshot into it, applies the pull request's migrations one version at a time with your migrate command, and reports DbProof's verdict. It authenticates with the job's GitHub OIDC token (`permissions: id-token: write`), so pull request workflows hold no DbProof secret.
 - `actions/capture` runs on a schedule and around deploys: it captures the schema, the planner's statistics and the migration history, using the connection your migrations run with, and uploads them with the project's capture token. It never reads a row of your application's tables, and never fails the job.
 
 Each builds the agent from its own checkout with the Go version in `go.mod`, so what runs is exactly the pinned commit.
