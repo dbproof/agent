@@ -13,8 +13,6 @@ DbProof's setup pull request adds workflows that use two actions from this repos
 
 Each builds the agent from its own checkout with the Go version in `go.mod`, so what runs is exactly the pinned commit.
 
-While this repository is private, a repository can only use its actions if Settings → Actions → General → Access here allows repositories owned by the same account.
-
 ## Packages
 
 - `schema`: inspects a Postgres schema from `pg_catalog`, diffs two schemas offline and generates DDL.
