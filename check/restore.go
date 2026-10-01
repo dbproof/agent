@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/borovikovd/dbproof-agent/capture"
 	"github.com/borovikovd/dbproof-agent/schema"
 	"github.com/borovikovd/dbproof-agent/snapshot"
 )
@@ -57,6 +58,29 @@ func restore(ctx context.Context, conn *pgx.Conn, snap *snapshot.Snapshot) error
 			return fmt.Errorf("restore migration history: %w", err)
 		}
 	}
+	return nil
+}
+
+// atlasHistoryToDefault moves Atlas history restored outside Atlas's default
+// place there, and points cfg at it. Production may keep it in public, as on
+// Neon, which ignores the search_path Atlas connects with; the check database
+// is plain Postgres, where the workflow's `atlas migrate apply` looks in the
+// default place and would otherwise find no history.
+func atlasHistoryToDefault(ctx context.Context, cfg *Config) error {
+	h := cfg.Snapshot.History
+	def := capture.DefaultHistoryTable(snapshot.ToolAtlas)
+	if cfg.Tool != snapshot.ToolAtlas || h == nil || h.Table == def {
+		return nil
+	}
+	namespace, _, _ := strings.Cut(def, ".")
+	if _, err := cfg.Conn.Exec(ctx, "CREATE SCHEMA "+namespace+"; ALTER TABLE "+h.Table+" SET SCHEMA "+namespace); err != nil {
+		return fmt.Errorf("move Atlas history to %s: %w", def, err)
+	}
+	moved := *h
+	moved.Table = def
+	snap := *cfg.Snapshot
+	snap.History = &moved
+	cfg.Snapshot = &snap
 	return nil
 }
 

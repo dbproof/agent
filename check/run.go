@@ -119,6 +119,9 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 		return done(), nil
 	}
 	r.step(verifyName, "Schema identical", StatusOK, stepStart)
+	if err := atlasHistoryToDefault(ctx, &cfg); err != nil {
+		return nil, err
+	}
 
 	applied := capture.Applied(cfg.Snapshot.History)
 	// A pull request that edits a migration production already ran, or adds
