@@ -176,6 +176,10 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show V%s, so it ran against another database. Point it at the check database: -url=$DBPROOF_CHECK_JDBC_URL for Flyway, --url \"$DBPROOF_CHECK_DSN\" for Atlas.", m.Version), stepStart)
 				return done(), nil
 			}
+			if errors.Is(err, errStaleAtlasSum) {
+				r.setup(group.name, "atlas.sum doesn't match the migration files, so Atlas refused to run them. Run atlas migrate hash and commit atlas.sum.", stepStart)
+				return done(), nil
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -211,6 +215,12 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 // changed.
 func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *schema.Schema) (*schema.Schema, []string, error) {
 	out, err := cfg.Migrator.Migrate(ctx, m.Version)
+	// Atlas checks atlas.sum before running anything, and says "checksum
+	// mismatch" when it's stale, unlike Flyway, whose mismatch is an edited
+	// applied migration.
+	if err != nil && cfg.Tool == snapshot.ToolAtlas && strings.Contains(strings.ToLower(out), "checksum mismatch") {
+		return nil, nil, errStaleAtlasSum
+	}
 	if err != nil {
 		m.Error = lastLines(out, 20)
 		if m.Error == "" {
@@ -237,6 +247,9 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	m.Changes = schema.Diff(before, after, opts)
 	return after, nil, nil
 }
+
+// errStaleAtlasSum means atlas.sum doesn't match the migration files.
+var errStaleAtlasSum = errors.New("atlas.sum doesn't match the migration files")
 
 // errNotRecorded means the migrate command succeeded without applying the
 // migration to the check database: it ran somewhere else.
