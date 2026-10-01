@@ -40,10 +40,37 @@ func DefaultHistoryTable(tool snapshot.Tool) string {
 	return "public.flyway_schema_history"
 }
 
+// atlasInPublic is where Atlas keeps its history on Neon: Neon ignores the
+// search_path Atlas connects with, so Atlas's advice there is
+// --revisions-schema public.
+const atlasInPublic = "public.atlas_schema_revisions"
+
+// findHistoryTable returns the tool's default history table, or for Atlas
+// the one in public when only that exists.
+func findHistoryTable(ctx context.Context, conn *pgx.Conn, tool snapshot.Tool) (string, error) {
+	table := DefaultHistoryTable(tool)
+	if tool != snapshot.ToolAtlas {
+		return table, nil
+	}
+	var inDefault, inPublic bool
+	err := conn.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL, to_regclass($2) IS NOT NULL", table, atlasInPublic).Scan(&inDefault, &inPublic)
+	if err != nil {
+		return "", fmt.Errorf("find the Atlas history table: %w", err)
+	}
+	if !inDefault && inPublic {
+		return atlasInPublic, nil
+	}
+	return table, nil
+}
+
 // Run captures the database behind conn.
 func Run(ctx context.Context, conn *pgx.Conn, cfg Config) (*snapshot.Snapshot, error) {
 	if cfg.HistoryTable == "" {
-		cfg.HistoryTable = DefaultHistoryTable(cfg.Tool)
+		table, err := findHistoryTable(ctx, conn, cfg.Tool)
+		if err != nil {
+			return nil, err
+		}
+		cfg.HistoryTable = table
 	}
 	if cfg.Kind == snapshot.KindPostDeploy && cfg.ExpectVersion != "" {
 		if err := waitForVersion(ctx, conn, cfg); err != nil {
@@ -177,6 +204,9 @@ func readHistory(ctx context.Context, conn *pgx.Conn, tool snapshot.Tool, table 
 	if err := pgxscan(ctx, conn, &present, `SELECT a.attname::text FROM pg_attribute a
 		WHERE a.attrelid = to_regclass($1) AND a.attnum > 0 AND NOT a.attisdropped`, ident); err != nil {
 		return nil, fmt.Errorf("read the columns of %s: %w", table, err)
+	}
+	if len(present) == 0 {
+		return nil, fmt.Errorf("there's no %s history table at %s", tool, table)
 	}
 	for _, c := range want.required {
 		if !slices.Contains(present, c) {

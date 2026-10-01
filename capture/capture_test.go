@@ -143,3 +143,42 @@ func TestCaptureReadsOnlyTheHistoryTable(t *testing.T) {
 		t.Fatalf("capture with customers as the history = %v, want a refusal", err)
 	}
 }
+
+// On Neon, which ignores the search_path Atlas connects with, Atlas's own
+// advice is --revisions-schema public, so its history is public's
+// atlas_schema_revisions. Capture finds it there without being told.
+func TestCaptureFindsAtlasHistoryInPublic(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	db := pgtest.NewDB(t, server)
+	pgtest.Exec(t, db, `
+		CREATE TABLE customers (id bigint PRIMARY KEY, email text NOT NULL);
+		-- As Atlas creates it with --revisions-schema public.
+		CREATE TABLE atlas_schema_revisions (
+		  version character varying NOT NULL PRIMARY KEY,
+		  description character varying NOT NULL,
+		  type bigint NOT NULL,
+		  applied bigint NOT NULL,
+		  total bigint NOT NULL,
+		  executed_at timestamp with time zone NOT NULL,
+		  execution_time bigint NOT NULL,
+		  error text,
+		  error_stmt text,
+		  hash character varying NOT NULL,
+		  partial_hashes jsonb,
+		  operator_version character varying NOT NULL
+		);
+		INSERT INTO atlas_schema_revisions VALUES
+		  ('20260901120000', 'init', 2, 3, 3, now(), 1000, NULL, NULL, 'h1', NULL, 'Atlas CLI v1.3.0'),
+		  ('20260915120000', 'customers', 2, 1, 1, now(), 1000, NULL, NULL, 'h2', NULL, 'Atlas CLI v1.3.0');`)
+
+	snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolAtlas})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snap.History.Table != "public.atlas_schema_revisions" {
+		t.Errorf("history table = %q, want public.atlas_schema_revisions", snap.History.Table)
+	}
+	if got := capture.Applied(snap.History); !slices.Equal(got, []string{"20260901120000", "20260915120000"}) {
+		t.Errorf("Applied = %v, want both migrations", got)
+	}
+}
