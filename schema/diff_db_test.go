@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/schema"
 )
 
 // TestDiffDetectsChanges makes one change of each kind against a real

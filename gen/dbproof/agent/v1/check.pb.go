@@ -1110,9 +1110,9 @@ const file_dbproof_agent_v1_check_proto_rawDesc = "" +
 	"\n" +
 	"BeginCheck\x12#.dbproof.agent.v1.BeginCheckRequest\x1a$.dbproof.agent.v1.BeginCheckResponse\x12Z\n" +
 	"\vReportCheck\x12$.dbproof.agent.v1.ReportCheckRequest\x1a%.dbproof.agent.v1.ReportCheckResponse\x12f\n" +
-	"\x0fGetCheckVerdict\x12(.dbproof.agent.v1.GetCheckVerdictRequest\x1a).dbproof.agent.v1.GetCheckVerdictResponseB\xc6\x01\n" +
+	"\x0fGetCheckVerdict\x12(.dbproof.agent.v1.GetCheckVerdictRequest\x1a).dbproof.agent.v1.GetCheckVerdictResponseB\xbb\x01\n" +
 	"\x14com.dbproof.agent.v1B\n" +
-	"CheckProtoP\x01Z@github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
+	"CheckProtoP\x01Z5github.com/dbproof/agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
 
 var (
 	file_dbproof_agent_v1_check_proto_rawDescOnce sync.Once

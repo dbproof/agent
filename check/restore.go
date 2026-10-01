@@ -8,9 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/dbproof-agent/capture"
-	"github.com/borovikovd/dbproof-agent/schema"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/capture"
+	"github.com/dbproof/agent/schema"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // ErrNotEmpty means the check database already holds tables. The check only

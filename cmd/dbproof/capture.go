@@ -13,10 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/dbproof-agent/capture"
-	"github.com/borovikovd/dbproof-agent/client"
-	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/capture"
+	"github.com/dbproof/agent/client"
+	agentv1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
+	"github.com/dbproof/agent/snapshot"
 )
 
 type stringList []string

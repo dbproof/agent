@@ -11,9 +11,9 @@ import (
 
 	"connectrpc.com/connect"
 
-	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
-	"github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1/agentv1connect"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	agentv1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
+	"github.com/dbproof/agent/gen/dbproof/agent/v1/agentv1connect"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // Client is an authenticated connection to DbProof.

@@ -12,8 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/dbproof-agent/schema"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/schema"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // Config says what to capture.

@@ -3,8 +3,8 @@ package schema_test
 import (
 	"testing"
 
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/schema"
 )
 
 // TestChangeDDL applies the DDL for a diff to a restore of the "before"

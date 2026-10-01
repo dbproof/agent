@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/borovikovd/dbproof-agent/check"
-	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
+	"github.com/dbproof/agent/check"
+	agentv1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
 )
 
 // pullRequest describes the pull request under check: from flags, or from

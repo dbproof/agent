@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/borovikovd/dbproof-agent/capture"
-	"github.com/borovikovd/dbproof-agent/check"
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/capture"
+	"github.com/dbproof/agent/check"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // atlas runs the real Atlas CLI, which `just tools` installs into bin.

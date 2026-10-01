@@ -1,4 +1,4 @@
-module github.com/borovikovd/dbproof-agent
+module github.com/dbproof/agent
 
 go 1.27.1
 

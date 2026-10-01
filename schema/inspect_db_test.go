@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/schema"
 )
 
 func TestInspectExclusions(t *testing.T) {

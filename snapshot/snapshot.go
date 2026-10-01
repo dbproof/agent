@@ -11,7 +11,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/schema"
 )
 
 // FormatVersion is the snapshot format this agent writes. Readers accept any

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/schema"
 )
 
 // TestDriftDDL follows what DbProof does with drift: production changes

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/schema"
 )
 
 func TestEncodeDecode(t *testing.T) {

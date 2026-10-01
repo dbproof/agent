@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // CommandMigrator runs the customer's own migrate command, such as

@@ -15,10 +15,10 @@ import (
 	"connectrpc.com/connect"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/borovikovd/dbproof-agent/check"
-	"github.com/borovikovd/dbproof-agent/client"
-	agentv1 "github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1"
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/check"
+	"github.com/dbproof/agent/client"
+	agentv1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // errUnavailable means DbProof couldn't be reached or didn't answer in time.

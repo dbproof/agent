@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/borovikovd/dbproof-agent/snapshot"
+	"github.com/dbproof/agent/snapshot"
 )
 
 // File is one versioned migration in the repository.

@@ -352,8 +352,8 @@ const file_dbproof_agent_v1_capture_proto_rawDesc = "" +
 	"\x14MIGRATION_TOOL_ATLAS\x10\x022\xe0\x01\n" +
 	"\x0eCaptureService\x12i\n" +
 	"\x10GetCaptureConfig\x12).dbproof.agent.v1.GetCaptureConfigRequest\x1a*.dbproof.agent.v1.GetCaptureConfigResponse\x12c\n" +
-	"\x0eUploadSnapshot\x12'.dbproof.agent.v1.UploadSnapshotRequest\x1a(.dbproof.agent.v1.UploadSnapshotResponseB\xc8\x01\n" +
-	"\x14com.dbproof.agent.v1B\fCaptureProtoP\x01Z@github.com/borovikovd/dbproof-agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
+	"\x0eUploadSnapshot\x12'.dbproof.agent.v1.UploadSnapshotRequest\x1a(.dbproof.agent.v1.UploadSnapshotResponseB\xbd\x01\n" +
+	"\x14com.dbproof.agent.v1B\fCaptureProtoP\x01Z5github.com/dbproof/agent/gen/dbproof/agent/v1;agentv1\xa2\x02\x03DAX\xaa\x02\x10Dbproof.Agent.V1\xca\x02\x10Dbproof\\Agent\\V1\xe2\x02\x1cDbproof\\Agent\\V1\\GPBMetadata\xea\x02\x12Dbproof::Agent::V1b\x06proto3"
 
 var (
 	file_dbproof_agent_v1_capture_proto_rawDescOnce sync.Once

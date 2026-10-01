@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/borovikovd/dbproof-agent/internal/pgtest"
-	"github.com/borovikovd/dbproof-agent/schema"
+	"github.com/dbproof/agent/internal/pgtest"
+	"github.com/dbproof/agent/schema"
 )
 
 // TestRoundTrip is the schema engine's acceptance test: inspecting a schema as
