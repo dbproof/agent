@@ -181,9 +181,10 @@ func (d *differ) tables(a, b *Schema) {
 				"rls_forced": x.RLSForced != y.RLSForced,
 			})
 		})
+	old := tablesByID(a)
 	for i := range b.Tables {
 		after := &b.Tables[i]
-		before := a.Table(after.ID())
+		before := old[after.ID()]
 		if before == nil {
 			continue
 		}
@@ -217,8 +218,9 @@ func inheritedFrom(b *Schema, changes []Change) func(Change) bool {
 			made[key{c.Op, c.ID, strings.Join(c.Fields, ",")}] = true
 		}
 	}
+	tables := tablesByID(b)
 	return func(c Change) bool {
-		t := b.Table(c.Table)
+		t := tables[c.Table]
 		if c.Kind != KindColumn || t == nil || t.PartitionOf == "" {
 			return false
 		}

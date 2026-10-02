@@ -101,9 +101,10 @@ func Encode(s *Snapshot) ([]byte, error) {
 
 // MaxDecodedSize bounds a snapshot's size once decompressed. Uploads are
 // capped compressed, and gzip inflates zeros a thousandfold, so without it a
-// small upload could fill the server's memory. A schema with tens of
-// thousands of objects stays well under it.
-const MaxDecodedSize = 256 << 20
+// small upload could fill the server's memory; decoding takes about five
+// times the decompressed size again. A schema of 10,000 tables is about
+// 25 MiB decompressed.
+const MaxDecodedSize = 64 << 20
 
 // Decode reads a snapshot written by Encode, rejecting formats newer than
 // this code understands and snapshots over MaxDecodedSize.

@@ -47,8 +47,9 @@ func RestoreDDL(s *Schema) []string {
 		}
 		return []string{t.PartitionOf}
 	})
+	byID := tablesByID(s)
 	for _, t := range tables {
-		out = append(out, createTableSQL(t, s.Table(t.PartitionOf))...)
+		out = append(out, createTableSQL(t, byID[t.PartitionOf])...)
 	}
 	for _, q := range s.Sequences {
 		if q.OwnedBy != "" {

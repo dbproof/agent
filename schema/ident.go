@@ -84,6 +84,16 @@ func (t *Table) Column(name string) *Column {
 	return nil
 }
 
+// tablesByID indexes s's tables by identity, for lookups in a loop over
+// them, where Table would make the loop quadratic.
+func tablesByID(s *Schema) map[string]*Table {
+	m := make(map[string]*Table, len(s.Tables))
+	for i := range s.Tables {
+		m[s.Tables[i].ID()] = &s.Tables[i]
+	}
+	return m
+}
+
 // Table returns the table with the given identity, or nil.
 func (s *Schema) Table(id string) *Table {
 	for i := range s.Tables {
