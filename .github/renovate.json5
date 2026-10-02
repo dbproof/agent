@@ -1,0 +1,20 @@
+// Renovate keeps the agent's dependencies current: Go modules, and the
+// actions its own CI and its published actions (actions/*/action.yml) use,
+// pinned to digests. Customers get the updates with the next release tag.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended', 'helpers:pinGitHubActionDigests'],
+  timezone: 'Europe/London',
+  semanticCommits: 'disabled',
+  postUpdateOptions: ['gomodTidy'],
+  packageRules: [
+    {
+      // Everything but a major version goes into one pull request, which
+      // Renovate merges itself once CI passes on a branch that's up to date
+      // with main. Majors wait for a person.
+      matchUpdateTypes: ['minor', 'patch', 'digest', 'pin', 'pinDigest'],
+      groupName: 'non-major dependencies',
+      automerge: true,
+    },
+  ],
+}
