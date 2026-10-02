@@ -34,16 +34,29 @@ runs:
   using: composite
   steps:
     # The agent builds from this action's own checkout, so the version that
-    # runs is exactly the commit the workflow pins.
-    # setup-go's cache takes no ".." in paths, so name the agent's root.
+    # runs is exactly the commit the workflow pins. That source sits outside
+    # the workspace, where setup-go's cache can't hash go.sum, so the built
+    # binary itself is cached, keyed by a hash of the source.
     - name: Find the agent
       shell: bash
-      run: echo "DBPROOF_AGENT_ROOT=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)" >> "$GITHUB_ENV"
-    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      run: |
+        root=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)
+        echo "DBPROOF_AGENT_ROOT=$root" >> "$GITHUB_ENV"
+        files=$(cd "$root" && find . -name '*.go' -o -name go.mod -o -name go.sum | LC_ALL=C sort)
+        # openssl, not sha256sum: macOS runners have only the former.
+        echo "DBPROOF_AGENT_SOURCE=$( (echo "$files"; cd "$root" && echo "$files" | xargs cat) | openssl dgst -sha256 | awk '{print substr($NF, 1, 16)}')" >> "$GITHUB_ENV"
+    - id: agent-cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.temp }}/dbproof
+        key: dbproof-agent-${{ runner.os }}-${{ runner.arch }}-${{ env.DBPROOF_AGENT_SOURCE }}-${{ github.action_ref || 'dev' }}
+    - if: steps.agent-cache.outputs.cache-hit != 'true'
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version-file: ${{ env.DBPROOF_AGENT_ROOT }}/go.mod
-        cache-dependency-path: ${{ env.DBPROOF_AGENT_ROOT }}/go.sum
+        cache: false
     - name: Build the DbProof agent
+      if: steps.agent-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
         VERSION: ${{ github.action_ref || 'dev' }}
