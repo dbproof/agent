@@ -42,6 +42,9 @@ runs:
       run: |
         root=$(cd "$GITHUB_ACTION_PATH/../.." && pwd)
         echo "DBPROOF_AGENT_ROOT=$root" >> "$GITHUB_ENV"
+        # Read here: in a step that uses another action, github.action_ref is
+        # that action's ref, not this one's.
+        echo "DBPROOF_AGENT_REF=${{ github.action_ref || 'dev' }}" >> "$GITHUB_ENV"
         files=$(cd "$root" && find . -name '*.go' -o -name go.mod -o -name go.sum | LC_ALL=C sort)
         # openssl, not sha256sum: macOS runners have only the former.
         echo "DBPROOF_AGENT_SOURCE=$( (echo "$files"; cd "$root" && echo "$files" | xargs cat) | openssl dgst -sha256 | awk '{print substr($NF, 1, 16)}')" >> "$GITHUB_ENV"
@@ -49,7 +52,7 @@ runs:
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ runner.temp }}/dbproof
-        key: dbproof-agent-${{ runner.os }}-${{ runner.arch }}-${{ env.DBPROOF_AGENT_SOURCE }}-${{ github.action_ref || 'dev' }}
+        key: dbproof-agent-${{ runner.os }}-${{ runner.arch }}-${{ env.DBPROOF_AGENT_SOURCE }}-${{ env.DBPROOF_AGENT_REF }}
     - if: steps.agent-cache.outputs.cache-hit != 'true'
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
@@ -59,7 +62,7 @@ runs:
       if: steps.agent-cache.outputs.cache-hit != 'true'
       shell: bash
       env:
-        VERSION: ${{ github.action_ref || 'dev' }}
+        VERSION: ${{ env.DBPROOF_AGENT_REF }}
       run: go build -C "$DBPROOF_AGENT_ROOT" -ldflags "-X main.version=$VERSION" -o "$RUNNER_TEMP/dbproof" ./cmd/dbproof
     - name: Check migrations
       shell: bash
