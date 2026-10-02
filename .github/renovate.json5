@@ -1,12 +1,31 @@
-// Renovate keeps the agent's dependencies current: Go modules, and the
-// actions its own CI and its published actions (actions/*/action.yml) use,
-// pinned to digests. Customers get the updates with the next release tag.
+// Renovate keeps the agent's dependencies current: Go modules, the actions
+// its CI and its published actions (actions/*/action.yml) use, pinned to
+// digests, the test databases' images and the tools the justfile downloads.
+// Customers get the updates with the next release tag.
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['config:recommended', 'helpers:pinGitHubActionDigests'],
   timezone: 'Europe/London',
   semanticCommits: 'disabled',
   postUpdateOptions: ['gomodTidy'],
+  customManagers: [
+    {
+      customType: 'regex',
+      description: 'golangci-lint, which the justfile downloads',
+      managerFilePatterns: ['/(^|/)justfile$/'],
+      matchStrings: ['golangci_version := "(?<currentValue>v[^"]+)"'],
+      depNameTemplate: 'golangci/golangci-lint',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      customType: 'regex',
+      description: 'Atlas, which the justfile downloads',
+      managerFilePatterns: ['/(^|/)justfile$/'],
+      matchStrings: ['atlas_version := "(?<currentValue>v[^"]+)"'],
+      depNameTemplate: 'ariga/atlas',
+      datasourceTemplate: 'github-releases',
+    },
+  ],
   packageRules: [
     {
       // Everything but a major version goes into one pull request, which
@@ -15,6 +34,14 @@
       matchUpdateTypes: ['minor', 'patch', 'digest', 'pin', 'pinDigest'],
       groupName: 'non-major dependencies',
       automerge: true,
+    },
+    {
+      // The test databases are the oldest and newest Postgres majors the
+      // agent supports; those change on purpose.
+      matchDatasources: ['docker'],
+      matchPackageNames: ['postgres', 'pgvector/pgvector'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
     },
   ],
 }
