@@ -23,7 +23,7 @@ func TestPullRequestFilesResolveFromTheWorkingDirectory(t *testing.T) {
 	}
 	t.Chdir(repo)
 
-	got, err := pullRequestFiles(checkFlags{prFiles: "db/V4__due_date.sql, db/V5__index.sql", repoRoot: workspace})
+	got, err := pullRequestFiles(t.Context(), checkFlags{prFiles: "db/V4__due_date.sql, db/V5__index.sql", repoRoot: workspace})
 	if err != nil {
 		t.Fatal(err)
 	}

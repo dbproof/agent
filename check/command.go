@@ -58,7 +58,7 @@ func (m CommandMigrator) Migrate(ctx context.Context, target string) (string, er
 	if err != nil {
 		return "", err
 	}
-	cmd := exec.CommandContext(ctx, "sh", "-c", m.Command+targetArgs(m.Tool, target))
+	cmd := exec.CommandContext(ctx, "sh", "-c", m.Command+targetArgs(m.Tool, target)) //nolint:gosec // the workflow's own migrate command, run as it asks
 	cmd.Env = append(os.Environ(), env...)
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out

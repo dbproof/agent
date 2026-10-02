@@ -100,7 +100,7 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 		Project:           f.project,
 		PullRequest:       pr,
 		WorkflowRunId:     envInt64("GITHUB_RUN_ID"),
-		RunAttempt:        int32(envInt64("GITHUB_RUN_ATTEMPT")),
+		RunAttempt:        envInt32("GITHUB_RUN_ATTEMPT"),
 		AgentVersion:      version,
 		FailOnUnreachable: f.failOnUnreachable,
 	}))
@@ -122,7 +122,7 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 			return nil, err
 		}
 	}
-	prFiles, err := pullRequestFiles(f)
+	prFiles, err := pullRequestFiles(ctx, f)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 	if err != nil {
 		return nil, fmt.Errorf("connect to the check database: %w", err)
 	}
-	defer func() { _ = conn.Close(context.Background()) }()
+	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
 	r, err := check.Run(ctx, check.Config{
 		Conn: conn, Snapshot: snap, SnapshotLabel: begin.Msg.GetSnapshotVersion(), Tool: tool,
 		Files: files, PullRequestFiles: prFiles, MigratorName: migratorName(f.migrateCommand),
@@ -197,13 +197,14 @@ func isUnreachable(err error) bool {
 	switch connect.CodeOf(err) {
 	case connect.CodeUnavailable, connect.CodeDeadlineExceeded, connect.CodeUnknown, connect.CodeInternal:
 		return true
+	default:
+		return errors.Is(err, context.DeadlineExceeded)
 	}
-	return errors.Is(err, context.DeadlineExceeded)
 }
 
 // pullRequestFiles returns the migration files the pull request adds or
 // changes, from the flag or from git.
-func pullRequestFiles(f checkFlags) ([]string, error) {
+func pullRequestFiles(ctx context.Context, f checkFlags) ([]string, error) {
 	var names []string
 	if f.prFiles != "" {
 		names = strings.Split(f.prFiles, ",")
@@ -212,14 +213,17 @@ func pullRequestFiles(f checkFlags) ([]string, error) {
 			return nil, errors.New("set -pull-request-files or -base-ref")
 		}
 		// Renamed files count: renumbering a migration is a rename.
-		out, err := exec.Command("git", "diff", "--name-only", "--diff-filter=AMR", "origin/"+f.baseRef+"...HEAD", "--", f.migrationsDir).Output()
+		// Arguments, not a shell: the base branch can't start an option, and
+		// -- ends them before the folder.
+		//nolint:gosec // see above
+		out, err := exec.CommandContext(ctx, "git", "diff", "--name-only", "--diff-filter=AMR", "origin/"+f.baseRef+"...HEAD", "--", f.migrationsDir).Output()
 		if err != nil {
 			return nil, fmt.Errorf("git diff against %s (check out with fetch-depth: 0): %w", f.baseRef, err)
 		}
 		names = strings.Fields(string(out))
 		// git names files from the repository's top level, which isn't the
 		// workspace when the workflow checks out into a subfolder.
-		top, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
+		top, err := exec.CommandContext(ctx, "git", "rev-parse", "--show-toplevel").Output()
 		if err != nil {
 			return nil, fmt.Errorf("find the repository root: %w", err)
 		}

@@ -88,8 +88,9 @@ func retryable(err error) bool {
 	switch connect.CodeOf(err) {
 	case connect.CodeUnavailable, connect.CodeDeadlineExceeded, connect.CodeResourceExhausted, connect.CodeUnknown, connect.CodeInternal:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // Tool converts the API's migration tool to the snapshot's.
@@ -99,6 +100,7 @@ func Tool(t agentv1.MigrationTool) snapshot.Tool {
 		return snapshot.ToolAtlas
 	case agentv1.MigrationTool_MIGRATION_TOOL_FLYWAY:
 		return snapshot.ToolFlyway
+	default:
+		return ""
 	}
-	return ""
 }

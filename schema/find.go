@@ -23,7 +23,7 @@ func (s *Schema) Find(kind Kind, id string) *Object {
 			return &Object{Table: t}
 		}
 	case KindColumn:
-		table, column, _ := cutLast(id)
+		table, column := cutLast(id)
 		if t := s.Table(table); t != nil {
 			for i := range t.Columns {
 				if QuoteIdent(t.Columns[i].Name) == column {
@@ -72,8 +72,9 @@ func (s *Schema) Holds(c Change) bool {
 		return current != nil
 	case OpDrop:
 		return current == nil
+	default:
+		return current != nil && reflect.DeepEqual(current, c.After)
 	}
-	return current != nil && reflect.DeepEqual(current, c.After)
 }
 
 // Undone reports whether s is back in the state before a change.

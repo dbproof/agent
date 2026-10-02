@@ -1,14 +1,60 @@
 version: "2"
 linters:
   default: standard
+  # The agent runs in customers' CI with their database credentials, so it
+  # gets the server's checks: security, HTTP and SQL handling, contexts,
+  # errors and JSON.
   enable:
+    - bidichk
+    - bodyclose
+    - containedctx
+    - contextcheck
+    - durationcheck
+    - errchkjson
+    - errname
     - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
     - gocritic
+    - gosec
+    - intrange
+    - makezero
     - misspell
+    - musttag
+    - nilerr
+    - nilnil
+    - noctx
     - nolintlint
+    - protogetter
+    - recvcheck
     - revive
+    - rowserrcheck
+    - sloglint
+    - sqlclosecheck
+    - thelper
     - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
   settings:
+    errcheck:
+      # An unchecked type assertion panics on the unexpected type.
+      check-type-assertions: true
+    staticcheck:
+      checks: ["all"]
+    exhaustive:
+      # A switch with a default case handles the rest on purpose.
+      default-signifies-exhaustive: true
+    forbidigo:
+      # The CLI writes to stdout and stderr on purpose, with fmt.Fprint*;
+      # these are debugging leftovers that bypass it.
+      forbid:
+        - pattern: ^(print|println)$
+          msg: write to the CLI's output with fmt.Fprint*
+        - pattern: ^log\.
+          msg: write to the CLI's output with fmt.Fprint*
     revive:
       enable-default-rules: true
       rules:
@@ -19,6 +65,13 @@ linters:
   exclusions:
     paths:
       - gen
+    rules:
+      # Tests hold fixed credentials and start databases and commands by
+      # design; gosec guards what ships.
+      - path: _test\.go
+        linters: [gosec]
+      - path: internal/pgtest/
+        linters: [gosec]
 formatters:
   enable:
     - gofmt

@@ -224,7 +224,7 @@ func inheritedFrom(b *Schema, changes []Change) func(Change) bool {
 		if c.Kind != KindColumn || t == nil || t.PartitionOf == "" {
 			return false
 		}
-		_, name, _ := cutLast(c.ID)
+		_, name := cutLast(c.ID)
 		return made[key{c.Op, t.PartitionOf + "." + name, strings.Join(c.Fields, ",")}]
 	}
 }
@@ -302,13 +302,13 @@ func withoutTables(s *Schema, ids []string) *Schema {
 	c.Policies = slices.DeleteFunc(slices.Clone(s.Policies), func(x Policy) bool { return skip[x.Table] })
 	c.Grants = slices.DeleteFunc(slices.Clone(s.Grants), func(g Grant) bool {
 		if g.ObjectKind == ObjectColumn {
-			t, _, _ := cutLast(g.Object)
+			t, _ := cutLast(g.Object)
 			return skip[t]
 		}
 		return skip[g.Object]
 	})
 	c.Sequences = slices.DeleteFunc(slices.Clone(s.Sequences), func(q Sequence) bool {
-		t, _, _ := cutLast(q.OwnedBy)
+		t, _ := cutLast(q.OwnedBy)
 		return skip[t]
 	})
 	return &c
@@ -327,7 +327,7 @@ func kept(a, b *Schema, id string) []Object {
 		g := &b.Grants[i]
 		on := g.Object
 		if g.ObjectKind == ObjectColumn {
-			on, _, _ = cutLast(on)
+			on, _ = cutLast(on)
 		}
 		if on == id && slices.Contains(a.Grants, *g) {
 			out = append(out, Object{Grant: g})

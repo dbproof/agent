@@ -12,7 +12,7 @@ func TestCutLast(t *testing.T) {
 		{"solo", "", "solo"},
 	}
 	for _, c := range cases {
-		before, after, _ := cutLast(c.in)
+		before, after := cutLast(c.in)
 		if before != c.before || after != c.after {
 			t.Errorf("cutLast(%q) = %q, %q; want %q, %q", c.in, before, after, c.before, c.after)
 		}

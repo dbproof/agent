@@ -21,7 +21,7 @@ func atlas(t *testing.T, args ...string) {
 	if err != nil {
 		t.Fatal("atlas isn't on PATH; run `just tools`")
 	}
-	if out, err := exec.Command(path, args...).CombinedOutput(); err != nil {
+	if out, err := exec.CommandContext(t.Context(), path, args...).CombinedOutput(); err != nil {
 		t.Fatalf("atlas %v: %v\n%s", args, err, out)
 	}
 }

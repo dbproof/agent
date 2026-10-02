@@ -22,13 +22,14 @@ type checkPostgres struct {
 // version, on a free local port, and waits until it accepts connections.
 func startPostgres(ctx context.Context, image string, major int32) (*checkPostgres, error) {
 	image = strings.ReplaceAll(image, "{major}", strconv.Itoa(int(major)))
+	//nolint:gosec // the workflow's postgres-image input, passed to docker as one argument
 	out, err := exec.CommandContext(ctx, "docker", "run", "-d", "--rm",
 		"-e", "POSTGRES_PASSWORD=postgres", "-p", "127.0.0.1::5432", image).Output()
 	if err != nil {
 		return nil, fmt.Errorf("start %s in Docker: %w", image, commandError(err))
 	}
 	pg := &checkPostgres{id: strings.TrimSpace(string(out))}
-	port, err := exec.CommandContext(ctx, "docker", "port", pg.id, "5432/tcp").Output()
+	port, err := exec.CommandContext(ctx, "docker", "port", pg.id, "5432/tcp").Output() //nolint:gosec // the container docker just started
 	if err != nil {
 		pg.stop()
 		return nil, fmt.Errorf("find %s's port: %w", image, commandError(err))
@@ -63,13 +64,13 @@ func ready(ctx context.Context, dsn string) bool {
 	if err != nil {
 		return false
 	}
-	defer func() { _ = conn.Close(context.Background()) }()
+	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
 	return conn.Ping(ctx) == nil
 }
 
 // stop removes the container, with its data.
 func (pg *checkPostgres) stop() {
-	_ = exec.Command("docker", "rm", "-f", pg.id).Run() //nolint:noctx // runs after the check's context may be done
+	_ = exec.Command("docker", "rm", "-f", pg.id).Run() //nolint:noctx,gosec // the container docker started; runs after the check's context may be done
 }
 
 // commandError adds a failed command's stderr to its error.

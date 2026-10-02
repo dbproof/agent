@@ -145,8 +145,9 @@ func describeConstraint(c Constraint) string {
 		return "FOREIGN KEY " + c.Name + " (" + columnList(c.Columns) + ") → " + DisplayName(c.RefTable) + "(" + columnList(c.RefColumns) + ")"
 	case ConstraintExclusion:
 		return "EXCLUDE " + c.Name
+	default:
+		return "CHECK " + c.Name
 	}
-	return "CHECK " + c.Name
 }
 
 func describeObject(c Change) string {
@@ -203,8 +204,9 @@ func opSign(op Op) string {
 		return "+"
 	case OpDrop:
 		return "-"
+	default:
+		return "~"
 	}
-	return "~"
 }
 
 func orNone(s string) string {

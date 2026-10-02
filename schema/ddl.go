@@ -224,7 +224,7 @@ func roleSQL(role string) string {
 func grantTarget(g Grant) (privilege, target string) {
 	switch g.ObjectKind {
 	case ObjectColumn:
-		table, column, _ := cutLast(g.Object)
+		table, column := cutLast(g.Object)
 		return g.Privilege + " (" + column + ")", "TABLE " + table
 	case ObjectFunction:
 		// ROUTINE covers functions and procedures alike.

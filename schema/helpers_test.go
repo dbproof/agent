@@ -45,8 +45,14 @@ func describe(changes []schema.Change) string {
 		b.WriteString(string(c.Op) + " " + string(c.Kind) + " " + c.ID)
 		if len(c.Fields) > 0 {
 			b.WriteString(" (" + strings.Join(c.Fields, ", ") + ")")
-			before, _ := json.Marshal(c.Before)
-			after, _ := json.Marshal(c.After)
+			before, err := json.Marshal(c.Before)
+			if err != nil {
+				panic(err)
+			}
+			after, err := json.Marshal(c.After)
+			if err != nil {
+				panic(err)
+			}
 			b.WriteString("\n    before: " + string(before) + "\n    after:  " + string(after))
 		}
 		b.WriteString("\n")

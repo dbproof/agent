@@ -130,7 +130,7 @@ func captureDatabase(ctx context.Context, dsn string, cfg capture.Config) (*snap
 	if err != nil {
 		return nil, fmt.Errorf("connect to the database: %w", err)
 	}
-	defer func() { _ = conn.Close(context.Background()) }()
+	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
 	runCtx, cancelRun := context.WithTimeout(ctx, cfg.WaitTimeout+5*time.Minute)
 	defer cancelRun()
 	return capture.Run(runCtx, conn, cfg)

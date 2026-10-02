@@ -30,12 +30,13 @@ func ActionsOIDCToken(ctx context.Context) (string, error) {
 	u.RawQuery = q.Encode()
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	// The runner sets the URL: it's GitHub's token service.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil) //nolint:gosec // see above
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+reqToken)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req) //nolint:gosec // GitHub's token service, as above
 	if err != nil {
 		return "", fmt.Errorf("request OIDC token: %w", err)
 	}

@@ -66,7 +66,7 @@ func ListFiles(tool snapshot.Tool, dir string) ([]File, error) {
 // compareVersions orders dotted versions numerically: 1.10 comes after 1.9.
 func compareVersions(a, b string) int {
 	pa, pb := strings.Split(a, "."), strings.Split(b, ".")
-	for i := 0; i < max(len(pa), len(pb)); i++ {
+	for i := range max(len(pa), len(pb)) {
 		var x, y int
 		if i < len(pa) {
 			x, _ = strconv.Atoi(pa[i])

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,6 +39,9 @@ func (p *pullRequest) resolve() (*agentv1.PullRequest, error) {
 			return nil, err
 		}
 	}
+	if p.number < 1 || p.number > math.MaxInt32 {
+		return nil, fmt.Errorf("pull request number %d is out of range", p.number)
+	}
 	return &agentv1.PullRequest{
 		Number: int32(p.number), Title: p.title, Author: p.author,
 		HeadBranch: p.headBranch, BaseBranch: p.baseBranch, HeadSha: p.headSHA,
@@ -48,7 +52,7 @@ func (p *pullRequest) fromEvent(path string) error {
 	if path == "" {
 		return errors.New("set -pr-number, or run on a pull_request event")
 	}
-	b, err := os.ReadFile(path)
+	b, err := os.ReadFile(path) //nolint:gosec // GitHub's event file, at the path the runner sets
 	if err != nil {
 		return fmt.Errorf("read the GitHub event: %w", err)
 	}
@@ -218,7 +222,7 @@ func escape(s string) string {
 }
 
 func appendFile(path, content string) error {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600) //nolint:gosec // a file the runner names for step output
 	if err != nil {
 		return err
 	}
@@ -236,4 +240,9 @@ func envOr(key, fallback string) string {
 func envInt64(key string) int64 {
 	n, _ := strconv.ParseInt(os.Getenv(key), 10, 64)
 	return n
+}
+
+func envInt32(key string) int32 {
+	n, _ := strconv.ParseInt(os.Getenv(key), 10, 32)
+	return int32(n)
 }

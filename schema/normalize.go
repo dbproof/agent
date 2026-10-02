@@ -54,12 +54,12 @@ func applyExclusions(s *Schema, patterns []string) {
 	s.Triggers = slices.DeleteFunc(s.Triggers, func(t Trigger) bool { return excluded[t.Table] })
 	s.Policies = slices.DeleteFunc(s.Policies, func(p Policy) bool { return excluded[p.Table] })
 	s.Sequences = slices.DeleteFunc(s.Sequences, func(q Sequence) bool {
-		table, _, _ := cutLast(q.OwnedBy)
+		table, _ := cutLast(q.OwnedBy)
 		return excluded[table]
 	})
 	s.Grants = slices.DeleteFunc(s.Grants, func(g Grant) bool {
 		if g.ObjectKind == ObjectColumn {
-			table, _, _ := cutLast(g.Object)
+			table, _ := cutLast(g.Object)
 			return excluded[table]
 		}
 		return excluded[g.Object]
@@ -68,7 +68,7 @@ func applyExclusions(s *Schema, patterns []string) {
 
 // cutLast splits "a.b.c" into "a.b" and "c". Quoted names containing dots
 // are split on the last unquoted dot.
-func cutLast(id string) (before, after string, ok bool) {
+func cutLast(id string) (before, after string) {
 	inQuote := false
 	last := -1
 	for i, r := range id {
@@ -80,9 +80,9 @@ func cutLast(id string) (before, after string, ok bool) {
 		}
 	}
 	if last < 0 {
-		return "", id, false
+		return "", id
 	}
-	return id[:last], id[last+1:], true
+	return id[:last], id[last+1:]
 }
 
 // Normalize sorts every list by identity so that equal schemas encode to

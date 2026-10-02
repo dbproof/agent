@@ -127,12 +127,12 @@ func impliedDrop(c Change, dropped map[string]bool) bool {
 	o := c.Before
 	switch {
 	case o.Grant != nil && o.Grant.ObjectKind == ObjectColumn:
-		table, _, _ := cutLast(o.Grant.Object)
+		table, _ := cutLast(o.Grant.Object)
 		return dropped[table]
 	case o.Grant != nil:
 		return dropped[o.Grant.Object]
 	case o.Sequence != nil && o.Sequence.OwnedBy != "":
-		table, _, _ := cutLast(o.Sequence.OwnedBy)
+		table, _ := cutLast(o.Sequence.OwnedBy)
 		return dropped[table] || dropped[o.Sequence.OwnedBy]
 	}
 	return false
@@ -145,6 +145,8 @@ func invert(c Change) Change {
 		c.Op = OpDrop
 	case OpDrop:
 		c.Op = OpAdd
+	case OpAlter:
+		// Swapping Before and After reverses an alter.
 	}
 	return c
 }
@@ -261,7 +263,7 @@ func (g ddlGen) drop(c Change) []string {
 	case KindConstraint:
 		return []string{"ALTER TABLE " + o.Constraint.Table + " DROP CONSTRAINT " + ie + QuoteIdent(o.Constraint.Name)}
 	case KindIndex:
-		schema, _, _ := cutLast(o.Index.Table)
+		schema, _ := cutLast(o.Index.Table)
 		return []string{"DROP INDEX " + ie + schema + "." + QuoteIdent(o.Index.Name)}
 	case KindView:
 		kind := "VIEW "
