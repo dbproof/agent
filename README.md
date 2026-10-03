@@ -1,31 +1,53 @@
+<img src="docs/logo.svg" width="64" height="64" alt="">
+
 # DbProof agent
 
-The open-source agent that DbProof customers run in their own CI or cluster. It captures the production schema and planner statistics, and runs pull request checks against a restored snapshot. It never reads rows from application tables.
+The open-source half of [DbProof](https://dbproof.dev), which tests every pull request's database migrations against a snapshot of production's schema and statistics. The agent runs in your GitHub Actions, so DbProof never connects to your database.
 
-Licensed under Apache-2.0 so security teams can audit exactly what runs in their network.
+- **`capture`** connects with the connection string your migrations already use, reads production's schema, planner statistics and migration history, and uploads them as a snapshot.
+- **`check`** restores the latest snapshot into a throwaway Postgres and applies the pull request's migrations one at a time. DbProof then reports on the pull request what would fail or lock in production.
+
+PostgreSQL 13 and later, with Flyway or Atlas. Apache-2.0.
+
+## What capture reads
+
+- **The catalog:** tables, columns, indexes, constraints, views, functions, triggers, policies, roles and grants.
+- **Planner estimates:** each table's row count, and each column's null fraction, distinct count and average width.
+- **Your migration history table,** with Flyway's `installed_by` replaced before upload.
+
+It never reads rows from your tables, or the value samples in `pg_stats` (`most_common_vals`, `histogram_bounds`). Every query is in [`capture/capture.go`](capture/capture.go) and [`schema/inspect*.go`](schema).
 
 ## GitHub Actions
 
-DbProof's setup pull request adds workflows that use two actions from this repository, pinned by commit:
+DbProof's setup pull request adds both, pinned by commit.
 
-- `actions/check` runs on pull requests: it starts a throwaway Postgres in Docker on production's major version (`postgres-image`, default `postgres:{major}`, or your own empty `database`), restores the latest snapshot into it, applies the pull request's migrations one version at a time with your migrate command, and reports DbProof's verdict. It authenticates with the job's GitHub OIDC token (`permissions: id-token: write`), so pull request workflows hold no DbProof secret.
-- `actions/capture` runs on a schedule and around deploys: it captures the schema, the planner's statistics and the migration history, using the connection your migrations run with, and uploads them with the project's capture token. It never reads a row of your application's tables, and never fails the job.
+| Action | Runs | Authenticates with |
+| --- | --- | --- |
+| [`actions/check`](actions/check/action.yml) | On pull requests that change migrations | The job's GitHub OIDC token, so pull requests hold no DbProof secret |
+| [`actions/capture`](actions/capture/action.yml) | Before and after each deploy, and every six hours | The project's upload-only capture token |
 
-Each builds the agent from its own checkout with the Go version in `go.mod`, so what runs is exactly the pinned commit.
+In your deploy job, capture goes on either side of the migration step:
 
-## Packages
+```yaml
+- uses: dbproof/agent/actions/capture@<commit> # v0.1.6
+  with:
+    kind: pre # and post, after your migrations
+    dbproof-url: https://app.dbproof.dev
+    capture-token: ${{ secrets.DBPROOF_CAPTURE_TOKEN }}
+    capture-dsn: ${{ secrets.DBPROOF_CAPTURE_DSN }}
+```
 
-- `schema`: inspects a Postgres schema from `pg_catalog`, diffs two schemas offline and generates DDL.
-- `snapshot`: the versioned snapshot format uploaded to DbProof.
-
-See [docs/schema-engine.md](docs/schema-engine.md) for how the schema engine works and why it isn't built on a library.
+- Each action builds the agent from its own checkout, so what runs is exactly the commit you pinned.
+- Capture never fails your deploy. If it can't run, it says why in a warning.
+- Check runs on production's Postgres major version. If your migrations need an extension, set `postgres-image`, e.g. `pgvector/pgvector:pg{major}`.
 
 ## Development
 
 ```
-just check   # starts Postgres 13 and 18, lints, runs every test
+just check            # starts Postgres 13 and 18, lints, runs every test
+go test -short ./...  # skips the tests that need Postgres
 ```
 
-`go test -short ./...` skips tests that need Postgres.
+`schema` inspects a Postgres schema from `pg_catalog`, diffs two schemas offline and generates DDL ([how and why](docs/schema-engine.md)). `snapshot` is the format uploaded to DbProof.
 
-Test files follow the source files: `diff_test.go` tests `diff.go`. Tests that need Postgres go in `diff_db_test.go` beside it, and helpers shared by a package's tests in `helpers_test.go`.
+Test files follow the source files: `diff_test.go` tests `diff.go`, tests that need Postgres go in `diff_db_test.go` beside it, and a package's shared test helpers in `helpers_test.go`.
