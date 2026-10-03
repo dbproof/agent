@@ -1,0 +1,50 @@
+name: Release
+
+# Renovate's merges release themselves. Once CI passes on main, if what
+# customers run changed since the last tag (the agent's Go code, go.mod and
+# go.sum, or the actions) and Renovate made every one of those changes, this
+# tags the next patch version on that commit and publishes a GitHub Release.
+# Anyone else's change waits for a release tagged by hand, which chooses its
+# own version. The server's Renovate then pins the new release.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  patch:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Tag the next patch version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          last=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$SHA")
+          shipped=(':(glob)**/*.go' ':(exclude,glob)**/*_test.go' go.mod go.sum actions)
+          authors=$(git log --no-merges --format=%an "$last..$SHA" -- "${shipped[@]}" | sort -u)
+          if [ -z "$authors" ]; then
+            echo "Nothing customers run changed since $last."
+            exit 0
+          fi
+          if [ "$authors" != "renovate[bot]" ]; then
+            echo "Changes since $last by $(echo $authors) wait for a release tagged by hand."
+            exit 0
+          fi
+          IFS=. read -r major minor patch <<< "${last#v}"
+          next="v$major.$minor.$((patch + 1))"
+          gh release create "$next" --target "$SHA" --title "$next" --generate-notes
