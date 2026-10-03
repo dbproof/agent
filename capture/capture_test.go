@@ -63,6 +63,13 @@ func TestCaptureAsTheMigrationRole(t *testing.T) {
 			if snap.History.Table != "public.flyway_schema_history" || len(snap.History.Rows) != 3 {
 				t.Fatalf("history = %+v", snap.History)
 			}
+			// Who ran each migration names a person; capture never reads it.
+			by := slices.Index(snap.History.Columns, "installed_by")
+			for _, row := range snap.History.Rows {
+				if by < 0 || row[by] == nil || *row[by] != "dbproof" {
+					t.Fatalf("installed_by = %v, want the constant dbproof in place of deploy", row)
+				}
+			}
 		})
 	}
 }

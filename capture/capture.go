@@ -186,6 +186,14 @@ var historyColumns = map[snapshot.Tool]struct{ all, required []string }{
 	},
 }
 
+// redactedHistory are history columns that name a person. Capture selects a
+// constant in their place, never their values; the column stays, because the
+// check restores the rows into a table that requires it. Flyway's
+// installed_by is the database user that ran each migration.
+var redactedHistory = map[snapshot.Tool]map[string]string{
+	snapshot.ToolFlyway: {"installed_by": "dbproof"},
+}
+
 // readHistory copies the history table row by row, as text. The simple
 // protocol makes Postgres send every value as text, whatever its type. It
 // reads only the tool's own history columns, and refuses a table that
@@ -215,9 +223,14 @@ func readHistory(ctx context.Context, conn *pgx.Conn, tool snapshot.Tool, table 
 	}
 	var cols []string
 	for _, c := range want.all {
-		if slices.Contains(present, c) {
-			cols = append(cols, pgx.Identifier{c}.Sanitize())
+		if !slices.Contains(present, c) {
+			continue
 		}
+		col := pgx.Identifier{c}.Sanitize()
+		if v, ok := redactedHistory[tool][c]; ok {
+			col = schema.QuoteLiteral(v) + " AS " + col
+		}
+		cols = append(cols, col)
 	}
 	rows, err := conn.Query(ctx, "SELECT "+strings.Join(cols, ", ")+" FROM "+ident+" ORDER BY 1", pgx.QueryExecModeSimpleProtocol)
 	if err != nil {
