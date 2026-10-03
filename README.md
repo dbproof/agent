@@ -1,6 +1,6 @@
-<img src="docs/logo.svg" width="64" height="64" alt="">
+# <img src="docs/logo.svg" width="36" height="36" align="absmiddle" alt=""> DbProof agent
 
-# DbProof agent
+[![CI](https://github.com/dbproof/agent/actions/workflows/ci.yml/badge.svg)](https://github.com/dbproof/agent/actions/workflows/ci.yml)
 
 The open-source half of [DbProof](https://dbproof.dev), which tests every pull request's database migrations against a snapshot of production's schema and statistics. The agent runs in your GitHub Actions, so DbProof never connects to your database.
 
