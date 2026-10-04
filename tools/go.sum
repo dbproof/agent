@@ -42,8 +42,8 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/bmatcuk/doublestar/v4 v4.10.0 h1:zU9WiOla1YA122oLM6i4EXvGW62DvKZVxIe6TYWexEs=
 github.com/bmatcuk/doublestar/v4 v4.10.0/go.mod h1:xBQ8jztBU6kakFMg+8WGxn0c6z1fTSPVIjEY1Wr7jzc=
-github.com/borovikovd/gomsort v0.3.0 h1:YW9RV68ktu9kJ+DjIjdMfcrf+9JkjY2DwtmHnTco6Vg=
-github.com/borovikovd/gomsort v0.3.0/go.mod h1:FSOabb5Wl5CBvvZxr4+P9mtjdaurgJW/hDAGbjEvS4A=
+github.com/borovikovd/gomsort v0.4.0 h1:nO+UCIrjIjk7QxrvCAXpu1sjF2RRSi5hls2zt01Gs9g=
+github.com/borovikovd/gomsort v0.4.0/go.mod h1:FSOabb5Wl5CBvvZxr4+P9mtjdaurgJW/hDAGbjEvS4A=
 github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo0tgAW4=
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/bufbuild/buf v1.73.0 h1:fDNKlxaf+PYi20dmVM7Yt3kOfXEhwrgKDLMNZFjztDs=

@@ -34,8 +34,8 @@ check: tools gen
     @just sorted
     go test ./...
 
-# Fail if any type's methods aren't in gomsort's order: entry points before
-# the helpers they call. Run `bin/gomsort .` to sort them.
+# Fail if any type's methods aren't in gomsort's order: entry points first,
+# each followed by the helpers it uses. Run `bin/gomsort .` to sort them.
 sorted:
     #!/usr/bin/env bash
     set -euo pipefail

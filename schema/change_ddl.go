@@ -182,6 +182,107 @@ type ddlGen struct {
 	guarded bool
 }
 
+func (g ddlGen) add(c Change) []string {
+	o := c.After
+	switch c.Kind {
+	case KindSchema:
+		return []string{createSchemaSQL(*o.Namespace, g.guarded)}
+	case KindExtension:
+		return []string{createExtensionSQL(*o.Extension)}
+	case KindType:
+		out := []string{createTypeSQL(*o.Type)}
+		for _, chk := range o.Type.Checks {
+			out = append(out, domainCheckSQL(*o.Type, chk))
+		}
+		return out
+	case KindSequence:
+		// ChangeDDL sets OWNED BY last, once the owning column exists.
+		return []string{strings.Replace(createSequenceSQL(*o.Sequence), "CREATE SEQUENCE ", "CREATE SEQUENCE "+ifNotExistsSQL(g.guarded), 1)}
+	case KindTable:
+		stmts := createTableSQL(*o.Table, nil)
+		stmts[0] = strings.Replace(stmts[0], "TABLE ", "TABLE "+ifNotExistsSQL(g.guarded), 1)
+		return append(stmts, rlsSQL(*o.Table)...)
+	case KindColumn:
+		return []string{"ALTER TABLE " + c.Table + " ADD COLUMN " + ifNotExistsSQL(g.guarded) + columnSQL(*o.Column)}
+	case KindConstraint:
+		con := *o.Constraint
+		if g.guarded {
+			return []string{unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_constraint WHERE conrelid = %s::regclass AND conname = %s",
+				QuoteLiteral(con.Table), QuoteLiteral(con.Name)), addConstraintSQL(con))}
+		}
+		return []string{addConstraintSQL(con)}
+	case KindIndex:
+		def := o.Index.Definition
+		if g.guarded {
+			def = strings.Replace(def, " INDEX ", " INDEX IF NOT EXISTS ", 1)
+		}
+		return []string{def}
+	case KindView:
+		// Unlike a restore, a change runs where the data is: fill the view.
+		return []string{strings.TrimSuffix(createViewSQL(*o.View, g.guarded), "\nWITH NO DATA")}
+	case KindFunc:
+		return []string{o.Function.Definition}
+	case KindTrigger:
+		return triggerSQL(*o.Trigger)
+	case KindPolicy:
+		return []string{createPolicySQL(*o.Policy)}
+	case KindGrant:
+		return []string{grantSQL(*o.Grant)}
+	}
+	return nil
+}
+
+func (g ddlGen) drop(c Change) []string {
+	o := c.Before
+	ie := ifExistsSQL(g.guarded)
+	switch c.Kind {
+	case KindSchema:
+		return []string{"DROP SCHEMA " + ie + QuoteIdent(o.Namespace.Name)}
+	case KindExtension:
+		return []string{"DROP EXTENSION " + ie + QuoteIdent(o.Extension.Name)}
+	case KindType:
+		kind := "TYPE "
+		if o.Type.Kind == TypeDomain {
+			kind = "DOMAIN "
+		}
+		return []string{"DROP " + kind + ie + o.Type.ID()}
+	case KindSequence:
+		id := o.Sequence.ID()
+		if g.guarded {
+			// An identity column's own sequence may have taken the name, as
+			// when a serial column turns identity.
+			return []string{when(fmt.Sprintf("EXISTS (SELECT FROM pg_catalog.pg_class s WHERE s.oid = to_regclass(%s) AND NOT EXISTS "+
+				"(SELECT FROM pg_catalog.pg_depend d WHERE d.classid = 'pg_catalog.pg_class'::regclass AND d.objid = s.oid AND d.deptype = 'i'))",
+				QuoteLiteral(id)), "DROP SEQUENCE "+id)}
+		}
+		return []string{"DROP SEQUENCE " + id}
+	case KindTable:
+		return []string{"DROP TABLE " + ie + o.Table.ID()}
+	case KindColumn:
+		return []string{"ALTER TABLE " + c.Table + " DROP COLUMN " + ie + QuoteIdent(o.Column.Name)}
+	case KindConstraint:
+		return []string{"ALTER TABLE " + o.Constraint.Table + " DROP CONSTRAINT " + ie + QuoteIdent(o.Constraint.Name)}
+	case KindIndex:
+		schema, _ := cutLast(o.Index.Table)
+		return []string{"DROP INDEX " + ie + schema + "." + QuoteIdent(o.Index.Name)}
+	case KindView:
+		kind := "VIEW "
+		if o.View.Materialized {
+			kind = "MATERIALIZED VIEW "
+		}
+		return []string{"DROP " + kind + ie + o.View.ID()}
+	case KindFunc:
+		return []string{"DROP " + strings.ToUpper(string(o.Function.Kind)) + " " + ie + o.Function.ID()}
+	case KindTrigger:
+		return []string{"DROP TRIGGER " + ie + QuoteIdent(o.Trigger.Name) + " ON " + o.Trigger.Table}
+	case KindPolicy:
+		return []string{"DROP POLICY " + ie + QuoteIdent(o.Policy.Name) + " ON " + o.Policy.Table}
+	case KindGrant:
+		return []string{revokeSQL(*o.Grant)}
+	}
+	return nil
+}
+
 func (g ddlGen) alter(c Change) []string {
 	switch c.Kind {
 	case KindExtension:
@@ -303,55 +404,6 @@ func (g ddlGen) alterType(c Change) []string {
 	return out
 }
 
-func (g ddlGen) alterColumnSQL(table string, before, after Column) []string {
-	col := "ALTER TABLE " + table + " ALTER COLUMN " + QuoteIdent(after.Name)
-	var out []string
-	if before.Generated != after.Generated || (after.Generated != "" && before.Default != after.Default) {
-		return []string{fmt.Sprintf("-- The generation expression of %s.%s changed; drop and re-add the column to change it", table, QuoteIdent(after.Name))}
-	}
-	if before.Type != after.Type || before.Collation != after.Collation {
-		stmt := col + " TYPE " + after.Type
-		if after.Collation != "" {
-			stmt += " COLLATE " + after.Collation
-		}
-		out = append(out, stmt)
-	}
-	toIdentity := before.Identity == "" && after.Identity != ""
-	if before.Default != after.Default && !toIdentity {
-		if after.Default == "" {
-			out = append(out, col+" DROP DEFAULT")
-		} else {
-			out = append(out, col+" SET DEFAULT "+after.Default)
-		}
-	}
-	if before.NotNull != after.NotNull {
-		out = append(out, col+map[bool]string{true: " SET NOT NULL", false: " DROP NOT NULL"}[after.NotNull])
-	}
-	switch {
-	case toIdentity:
-		// An identity column has no default: a serial column drops its
-		// nextval default first.
-		stmt := col + " ADD GENERATED " + strings.ToUpper(after.Identity) + " AS IDENTITY"
-		if before.Default != "" {
-			stmt = col + " DROP DEFAULT; " + stmt
-		}
-		if g.guarded {
-			stmt = unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_attribute WHERE attrelid = %s::regclass AND attname = %s AND attidentity <> ''",
-				QuoteLiteral(table), QuoteLiteral(after.Name)), stmt)
-		}
-		out = append(out, stmt)
-	case before.Identity != "" && after.Identity != "" && before.Identity != after.Identity:
-		out = append(out, col+" SET GENERATED "+strings.ToUpper(after.Identity))
-	}
-	return out
-}
-
-// recreate drops the old object and adds the new one.
-func (g ddlGen) recreate(c Change) []string {
-	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
-		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
-}
-
 func alterExtensionSQL(before, after Extension) []string {
 	var out []string
 	if before.Schema != after.Schema {
@@ -363,54 +415,10 @@ func alterExtensionSQL(before, after Extension) []string {
 	return out
 }
 
-func (g ddlGen) add(c Change) []string {
-	o := c.After
-	switch c.Kind {
-	case KindSchema:
-		return []string{createSchemaSQL(*o.Namespace, g.guarded)}
-	case KindExtension:
-		return []string{createExtensionSQL(*o.Extension)}
-	case KindType:
-		out := []string{createTypeSQL(*o.Type)}
-		for _, chk := range o.Type.Checks {
-			out = append(out, domainCheckSQL(*o.Type, chk))
-		}
-		return out
-	case KindSequence:
-		// ChangeDDL sets OWNED BY last, once the owning column exists.
-		return []string{strings.Replace(createSequenceSQL(*o.Sequence), "CREATE SEQUENCE ", "CREATE SEQUENCE "+ifNotExistsSQL(g.guarded), 1)}
-	case KindTable:
-		stmts := createTableSQL(*o.Table, nil)
-		stmts[0] = strings.Replace(stmts[0], "TABLE ", "TABLE "+ifNotExistsSQL(g.guarded), 1)
-		return append(stmts, rlsSQL(*o.Table)...)
-	case KindColumn:
-		return []string{"ALTER TABLE " + c.Table + " ADD COLUMN " + ifNotExistsSQL(g.guarded) + columnSQL(*o.Column)}
-	case KindConstraint:
-		con := *o.Constraint
-		if g.guarded {
-			return []string{unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_constraint WHERE conrelid = %s::regclass AND conname = %s",
-				QuoteLiteral(con.Table), QuoteLiteral(con.Name)), addConstraintSQL(con))}
-		}
-		return []string{addConstraintSQL(con)}
-	case KindIndex:
-		def := o.Index.Definition
-		if g.guarded {
-			def = strings.Replace(def, " INDEX ", " INDEX IF NOT EXISTS ", 1)
-		}
-		return []string{def}
-	case KindView:
-		// Unlike a restore, a change runs where the data is: fill the view.
-		return []string{strings.TrimSuffix(createViewSQL(*o.View, g.guarded), "\nWITH NO DATA")}
-	case KindFunc:
-		return []string{o.Function.Definition}
-	case KindTrigger:
-		return triggerSQL(*o.Trigger)
-	case KindPolicy:
-		return []string{createPolicySQL(*o.Policy)}
-	case KindGrant:
-		return []string{grantSQL(*o.Grant)}
-	}
-	return nil
+// recreate drops the old object and adds the new one.
+func (g ddlGen) recreate(c Change) []string {
+	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
+		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
 }
 
 func alterSequenceSQL(before, after Sequence) []string {
@@ -482,53 +490,45 @@ func alterTableSQL(before, after Table) []string {
 	return out
 }
 
-func (g ddlGen) drop(c Change) []string {
-	o := c.Before
-	ie := ifExistsSQL(g.guarded)
-	switch c.Kind {
-	case KindSchema:
-		return []string{"DROP SCHEMA " + ie + QuoteIdent(o.Namespace.Name)}
-	case KindExtension:
-		return []string{"DROP EXTENSION " + ie + QuoteIdent(o.Extension.Name)}
-	case KindType:
-		kind := "TYPE "
-		if o.Type.Kind == TypeDomain {
-			kind = "DOMAIN "
-		}
-		return []string{"DROP " + kind + ie + o.Type.ID()}
-	case KindSequence:
-		id := o.Sequence.ID()
-		if g.guarded {
-			// An identity column's own sequence may have taken the name, as
-			// when a serial column turns identity.
-			return []string{when(fmt.Sprintf("EXISTS (SELECT FROM pg_catalog.pg_class s WHERE s.oid = to_regclass(%s) AND NOT EXISTS "+
-				"(SELECT FROM pg_catalog.pg_depend d WHERE d.classid = 'pg_catalog.pg_class'::regclass AND d.objid = s.oid AND d.deptype = 'i'))",
-				QuoteLiteral(id)), "DROP SEQUENCE "+id)}
-		}
-		return []string{"DROP SEQUENCE " + id}
-	case KindTable:
-		return []string{"DROP TABLE " + ie + o.Table.ID()}
-	case KindColumn:
-		return []string{"ALTER TABLE " + c.Table + " DROP COLUMN " + ie + QuoteIdent(o.Column.Name)}
-	case KindConstraint:
-		return []string{"ALTER TABLE " + o.Constraint.Table + " DROP CONSTRAINT " + ie + QuoteIdent(o.Constraint.Name)}
-	case KindIndex:
-		schema, _ := cutLast(o.Index.Table)
-		return []string{"DROP INDEX " + ie + schema + "." + QuoteIdent(o.Index.Name)}
-	case KindView:
-		kind := "VIEW "
-		if o.View.Materialized {
-			kind = "MATERIALIZED VIEW "
-		}
-		return []string{"DROP " + kind + ie + o.View.ID()}
-	case KindFunc:
-		return []string{"DROP " + strings.ToUpper(string(o.Function.Kind)) + " " + ie + o.Function.ID()}
-	case KindTrigger:
-		return []string{"DROP TRIGGER " + ie + QuoteIdent(o.Trigger.Name) + " ON " + o.Trigger.Table}
-	case KindPolicy:
-		return []string{"DROP POLICY " + ie + QuoteIdent(o.Policy.Name) + " ON " + o.Policy.Table}
-	case KindGrant:
-		return []string{revokeSQL(*o.Grant)}
+func (g ddlGen) alterColumnSQL(table string, before, after Column) []string {
+	col := "ALTER TABLE " + table + " ALTER COLUMN " + QuoteIdent(after.Name)
+	var out []string
+	if before.Generated != after.Generated || (after.Generated != "" && before.Default != after.Default) {
+		return []string{fmt.Sprintf("-- The generation expression of %s.%s changed; drop and re-add the column to change it", table, QuoteIdent(after.Name))}
 	}
-	return nil
+	if before.Type != after.Type || before.Collation != after.Collation {
+		stmt := col + " TYPE " + after.Type
+		if after.Collation != "" {
+			stmt += " COLLATE " + after.Collation
+		}
+		out = append(out, stmt)
+	}
+	toIdentity := before.Identity == "" && after.Identity != ""
+	if before.Default != after.Default && !toIdentity {
+		if after.Default == "" {
+			out = append(out, col+" DROP DEFAULT")
+		} else {
+			out = append(out, col+" SET DEFAULT "+after.Default)
+		}
+	}
+	if before.NotNull != after.NotNull {
+		out = append(out, col+map[bool]string{true: " SET NOT NULL", false: " DROP NOT NULL"}[after.NotNull])
+	}
+	switch {
+	case toIdentity:
+		// An identity column has no default: a serial column drops its
+		// nextval default first.
+		stmt := col + " ADD GENERATED " + strings.ToUpper(after.Identity) + " AS IDENTITY"
+		if before.Default != "" {
+			stmt = col + " DROP DEFAULT; " + stmt
+		}
+		if g.guarded {
+			stmt = unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_attribute WHERE attrelid = %s::regclass AND attname = %s AND attidentity <> ''",
+				QuoteLiteral(table), QuoteLiteral(after.Name)), stmt)
+		}
+		out = append(out, stmt)
+	case before.Identity != "" && after.Identity != "" && before.Identity != after.Identity:
+		out = append(out, col+" SET GENERATED "+strings.ToUpper(after.Identity))
+	}
+	return out
 }
