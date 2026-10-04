@@ -283,12 +283,6 @@ func (g ddlGen) drop(c Change) []string {
 	return nil
 }
 
-// recreate drops the old object and adds the new one.
-func (g ddlGen) recreate(c Change) []string {
-	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
-		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
-}
-
 func (g ddlGen) alter(c Change) []string {
 	switch c.Kind {
 	case KindExtension:
@@ -338,6 +332,12 @@ func (g ddlGen) alter(c Change) []string {
 		// Constraints, indexes, policies and grants change by being recreated.
 		return g.recreate(c)
 	}
+}
+
+// recreate drops the old object and adds the new one.
+func (g ddlGen) recreate(c Change) []string {
+	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
+		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
 }
 
 func alterExtensionSQL(before, after Extension) []string {
