@@ -404,6 +404,55 @@ func (g ddlGen) alterType(c Change) []string {
 	return out
 }
 
+// recreate drops the old object and adds the new one.
+func (g ddlGen) recreate(c Change) []string {
+	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
+		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
+}
+
+func (g ddlGen) alterColumnSQL(table string, before, after Column) []string {
+	col := "ALTER TABLE " + table + " ALTER COLUMN " + QuoteIdent(after.Name)
+	var out []string
+	if before.Generated != after.Generated || (after.Generated != "" && before.Default != after.Default) {
+		return []string{fmt.Sprintf("-- The generation expression of %s.%s changed; drop and re-add the column to change it", table, QuoteIdent(after.Name))}
+	}
+	if before.Type != after.Type || before.Collation != after.Collation {
+		stmt := col + " TYPE " + after.Type
+		if after.Collation != "" {
+			stmt += " COLLATE " + after.Collation
+		}
+		out = append(out, stmt)
+	}
+	toIdentity := before.Identity == "" && after.Identity != ""
+	if before.Default != after.Default && !toIdentity {
+		if after.Default == "" {
+			out = append(out, col+" DROP DEFAULT")
+		} else {
+			out = append(out, col+" SET DEFAULT "+after.Default)
+		}
+	}
+	if before.NotNull != after.NotNull {
+		out = append(out, col+map[bool]string{true: " SET NOT NULL", false: " DROP NOT NULL"}[after.NotNull])
+	}
+	switch {
+	case toIdentity:
+		// An identity column has no default: a serial column drops its
+		// nextval default first.
+		stmt := col + " ADD GENERATED " + strings.ToUpper(after.Identity) + " AS IDENTITY"
+		if before.Default != "" {
+			stmt = col + " DROP DEFAULT; " + stmt
+		}
+		if g.guarded {
+			stmt = unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_attribute WHERE attrelid = %s::regclass AND attname = %s AND attidentity <> ''",
+				QuoteLiteral(table), QuoteLiteral(after.Name)), stmt)
+		}
+		out = append(out, stmt)
+	case before.Identity != "" && after.Identity != "" && before.Identity != after.Identity:
+		out = append(out, col+" SET GENERATED "+strings.ToUpper(after.Identity))
+	}
+	return out
+}
+
 func alterExtensionSQL(before, after Extension) []string {
 	var out []string
 	if before.Schema != after.Schema {
@@ -413,12 +462,6 @@ func alterExtensionSQL(before, after Extension) []string {
 		out = append(out, "ALTER EXTENSION "+QuoteIdent(after.Name)+" UPDATE TO "+QuoteLiteral(after.Version))
 	}
 	return out
-}
-
-// recreate drops the old object and adds the new one.
-func (g ddlGen) recreate(c Change) []string {
-	return append(g.drop(Change{Op: OpDrop, Kind: c.Kind, ID: c.ID, Table: c.Table, Before: c.Before}),
-		g.add(Change{Op: OpAdd, Kind: c.Kind, ID: c.ID, Table: c.Table, After: c.After})...)
 }
 
 func alterSequenceSQL(before, after Sequence) []string {
@@ -486,49 +529,6 @@ func alterTableSQL(before, after Table) []string {
 	}
 	if before.PartitionKey != after.PartitionKey || before.PartitionOf != after.PartitionOf || before.PartitionBound != after.PartitionBound {
 		out = append(out, fmt.Sprintf("-- Partitioning of %s changed; Postgres can't change it in place", id))
-	}
-	return out
-}
-
-func (g ddlGen) alterColumnSQL(table string, before, after Column) []string {
-	col := "ALTER TABLE " + table + " ALTER COLUMN " + QuoteIdent(after.Name)
-	var out []string
-	if before.Generated != after.Generated || (after.Generated != "" && before.Default != after.Default) {
-		return []string{fmt.Sprintf("-- The generation expression of %s.%s changed; drop and re-add the column to change it", table, QuoteIdent(after.Name))}
-	}
-	if before.Type != after.Type || before.Collation != after.Collation {
-		stmt := col + " TYPE " + after.Type
-		if after.Collation != "" {
-			stmt += " COLLATE " + after.Collation
-		}
-		out = append(out, stmt)
-	}
-	toIdentity := before.Identity == "" && after.Identity != ""
-	if before.Default != after.Default && !toIdentity {
-		if after.Default == "" {
-			out = append(out, col+" DROP DEFAULT")
-		} else {
-			out = append(out, col+" SET DEFAULT "+after.Default)
-		}
-	}
-	if before.NotNull != after.NotNull {
-		out = append(out, col+map[bool]string{true: " SET NOT NULL", false: " DROP NOT NULL"}[after.NotNull])
-	}
-	switch {
-	case toIdentity:
-		// An identity column has no default: a serial column drops its
-		// nextval default first.
-		stmt := col + " ADD GENERATED " + strings.ToUpper(after.Identity) + " AS IDENTITY"
-		if before.Default != "" {
-			stmt = col + " DROP DEFAULT; " + stmt
-		}
-		if g.guarded {
-			stmt = unlessExists(fmt.Sprintf("SELECT FROM pg_catalog.pg_attribute WHERE attrelid = %s::regclass AND attname = %s AND attidentity <> ''",
-				QuoteLiteral(table), QuoteLiteral(after.Name)), stmt)
-		}
-		out = append(out, stmt)
-	case before.Identity != "" && after.Identity != "" && before.Identity != after.Identity:
-		out = append(out, col+" SET GENERATED "+strings.ToUpper(after.Identity))
 	}
 	return out
 }

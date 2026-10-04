@@ -53,15 +53,6 @@ func (s *Schema) Find(kind Kind, id string) *Object {
 	return nil
 }
 
-func find[T any](list []T, id func(*T) string, want string, wrap func(*T) *Object) *Object {
-	for i := range list {
-		if id(&list[i]) == want {
-			return wrap(&list[i])
-		}
-	}
-	return nil
-}
-
 // Holds reports whether s is in the state a change leads to: an added
 // object exists, a dropped one doesn't, an altered one matches its after
 // state.
@@ -80,4 +71,13 @@ func (s *Schema) Holds(c Change) bool {
 // Undone reports whether s is back in the state before a change.
 func (s *Schema) Undone(c Change) bool {
 	return s.Holds(Change{Op: map[Op]Op{OpAdd: OpDrop, OpDrop: OpAdd, OpAlter: OpAlter}[c.Op], Kind: c.Kind, ID: c.ID, After: c.Before})
+}
+
+func find[T any](list []T, id func(*T) string, want string, wrap func(*T) *Object) *Object {
+	for i := range list {
+		if id(&list[i]) == want {
+			return wrap(&list[i])
+		}
+	}
+	return nil
 }

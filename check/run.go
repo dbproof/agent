@@ -211,6 +211,15 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	return done(), nil
 }
 
+// errStaleAtlasSum means atlas.sum doesn't match the migration files.
+var errStaleAtlasSum = errors.New("atlas.sum doesn't match the migration files")
+
+// errNotRecorded means the migrate command succeeded without applying the
+// migration to the check database: it ran somewhere else.
+var errNotRecorded = errors.New("migration not recorded in the check database")
+
+var checksumMismatch = regexp.MustCompile(`(?i)checksum mismatch for migration version (\S+)`)
+
 // apply runs the migrate command up to one migration and records what it
 // changed.
 func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *schema.Schema) (*schema.Schema, []string, error) {
@@ -248,12 +257,21 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	return after, nil, nil
 }
 
-// errStaleAtlasSum means atlas.sum doesn't match the migration files.
-var errStaleAtlasSum = errors.New("atlas.sum doesn't match the migration files")
+// changedApplied records a version whose applied migration file changed.
+func (r *Report) changedApplied(version string) {
+	if !slices.Contains(r.AppliedFileChanged, version) {
+		r.AppliedFileChanged = append(r.AppliedFileChanged, version)
+	}
+}
 
-// errNotRecorded means the migrate command succeeded without applying the
-// migration to the check database: it ran somewhere else.
-var errNotRecorded = errors.New("migration not recorded in the check database")
+func (r *Report) step(name, detail string, status Status, start time.Time) {
+	r.Steps = append(r.Steps, Step{Name: name, Detail: detail, Status: status, Duration: time.Since(start)})
+}
+
+func (r *Report) setup(name, problem string, start time.Time) {
+	r.SetupProblem = problem
+	r.step(name, problem, StatusSetupProblem, start)
+}
 
 // historyShows reports whether the check database's history table records
 // version as applied. Without a history table there's nothing to check.
@@ -273,15 +291,6 @@ func historyShows(ctx context.Context, cfg Config, version string) (bool, error)
 	return ok, nil
 }
 
-// changedApplied records a version whose applied migration file changed.
-func (r *Report) changedApplied(version string) {
-	if !slices.Contains(r.AppliedFileChanged, version) {
-		r.AppliedFileChanged = append(r.AppliedFileChanged, version)
-	}
-}
-
-var checksumMismatch = regexp.MustCompile(`(?i)checksum mismatch for migration version (\S+)`)
-
 // checksumMismatches finds the versions a migrate command rejected because
 // their file changed after being applied.
 func checksumMismatches(output string) []string {
@@ -293,15 +302,6 @@ func checksumMismatches(output string) []string {
 		versions = append(versions, "unknown")
 	}
 	return versions
-}
-
-func (r *Report) step(name, detail string, status Status, start time.Time) {
-	r.Steps = append(r.Steps, Step{Name: name, Detail: detail, Status: status, Duration: time.Since(start)})
-}
-
-func (r *Report) setup(name, problem string, start time.Time) {
-	r.SetupProblem = problem
-	r.step(name, problem, StatusSetupProblem, start)
 }
 
 func since(t time.Time) string {

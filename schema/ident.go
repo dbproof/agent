@@ -44,6 +44,16 @@ func QuoteLiteral(s string) string {
 // ID returns the table's identity, e.g. public.invoices.
 func (t *Table) ID() string { return Qualified(t.Schema, t.Name) }
 
+// Column returns the named column, or nil.
+func (t *Table) Column(name string) *Column {
+	for i := range t.Columns {
+		if t.Columns[i].Name == name {
+			return &t.Columns[i]
+		}
+	}
+	return nil
+}
+
 // ID returns the view's identity.
 func (v *View) ID() string { return Qualified(v.Schema, v.Name) }
 
@@ -72,16 +82,6 @@ func (p *Policy) ID() string { return p.Table + "." + QuoteIdent(p.Name) }
 // ID returns the grant's identity.
 func (g *Grant) ID() string {
 	return string(g.ObjectKind) + " " + g.Object + " " + g.Privilege + " " + g.Grantee
-}
-
-// Column returns the named column, or nil.
-func (t *Table) Column(name string) *Column {
-	for i := range t.Columns {
-		if t.Columns[i].Name == name {
-			return &t.Columns[i]
-		}
-	}
-	return nil
 }
 
 // tablesByID indexes s's tables by identity, for lookups in a loop over
