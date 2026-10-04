@@ -295,13 +295,13 @@ func checksumMismatches(output string) []string {
 	return versions
 }
 
-func (r *Report) step(name, detail string, status Status, start time.Time) {
-	r.Steps = append(r.Steps, Step{Name: name, Detail: detail, Status: status, Duration: time.Since(start)})
-}
-
 func (r *Report) setup(name, problem string, start time.Time) {
 	r.SetupProblem = problem
 	r.step(name, problem, StatusSetupProblem, start)
+}
+
+func (r *Report) step(name, detail string, status Status, start time.Time) {
+	r.Steps = append(r.Steps, Step{Name: name, Detail: detail, Status: status, Duration: time.Since(start)})
 }
 
 func since(t time.Time) string {

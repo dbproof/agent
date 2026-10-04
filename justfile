@@ -5,9 +5,9 @@ atlas_version := "v1.3.0"
 
 export PATH := justfile_directory() / "bin" + ":" + env_var("PATH")
 
-# Install pinned tools into ./bin: buf and protoc plugins from tools/go.mod,
-# golangci-lint, and the official Atlas build setup-atlas gives customers,
-# which check tests run.
+# Install pinned tools into ./bin: buf, protoc plugins and gomsort from
+# tools/go.mod, golangci-lint, and the official Atlas build setup-atlas gives
+# customers, which check tests run.
 tools:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -31,4 +31,17 @@ check: tools gen
     docker compose up -d --wait
     buf lint
     golangci-lint run ./...
+    @just sorted
     go test ./...
+
+# Fail if any type's methods aren't in gomsort's order: entry points before
+# the helpers they call. Run `bin/gomsort .` to sort them.
+sorted:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=$(gomsort -n .)
+    if [ -n "$out" ]; then
+      echo "$out" >&2
+      echo "Methods are out of order; run bin/gomsort . to sort them." >&2
+      exit 1
+    fi

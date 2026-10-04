@@ -23,6 +23,20 @@ type CommandMigrator struct {
 	DSN string
 }
 
+// Migrate runs the command up to target and returns its combined output.
+func (m CommandMigrator) Migrate(ctx context.Context, target string) (string, error) {
+	env, err := m.Env()
+	if err != nil {
+		return "", err
+	}
+	cmd := exec.CommandContext(ctx, "sh", "-c", m.Command+targetArgs(m.Tool, target)) //nolint:gosec // the workflow's own migrate command, run as it asks
+	cmd.Env = append(os.Environ(), env...)
+	var out bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &out, &out
+	err = cmd.Run()
+	return out.String(), err
+}
+
 // Env returns the variables the command sees, so a command can say
 // -url=$DBPROOF_CHECK_JDBC_URL or --url "$DBPROOF_CHECK_DSN".
 func (m CommandMigrator) Env() ([]string, error) {
@@ -50,18 +64,4 @@ func (m CommandMigrator) Env() ([]string, error) {
 		"FLYWAY_USER=" + u.User.Username(),
 		"FLYWAY_PASSWORD=" + password,
 	}, nil
-}
-
-// Migrate runs the command up to target and returns its combined output.
-func (m CommandMigrator) Migrate(ctx context.Context, target string) (string, error) {
-	env, err := m.Env()
-	if err != nil {
-		return "", err
-	}
-	cmd := exec.CommandContext(ctx, "sh", "-c", m.Command+targetArgs(m.Tool, target)) //nolint:gosec // the workflow's own migrate command, run as it asks
-	cmd.Env = append(os.Environ(), env...)
-	var out bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &out
-	err = cmd.Run()
-	return out.String(), err
 }

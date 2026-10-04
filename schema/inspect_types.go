@@ -76,89 +76,6 @@ func (in *inspector) types(ctx context.Context) error {
 	return nil
 }
 
-func (in *inspector) domainChecks(ctx context.Context, byOID map[uint32]*Type) error {
-	rows, err := in.tx.Query(ctx, `
-		SELECT c.contypid, c.conname, pg_catalog.pg_get_constraintdef(c.oid)
-		FROM pg_catalog.pg_constraint c
-		WHERE c.contypid = ANY($1::oid[]) AND c.contype = 'c'
-		ORDER BY c.conname`, in.typeOIDs)
-	if err != nil {
-		return err
-	}
-	var oid uint32
-	var check Check
-	_, err = pgx.ForEachRow(rows, []any{&oid, &check.Name, &check.Definition}, func() error {
-		t := byOID[oid]
-		t.Checks = append(t.Checks, check)
-		return nil
-	})
-	return err
-}
-
-func (in *inspector) compositeAttributes(ctx context.Context, byOID map[uint32]*Type) error {
-	rows, err := in.tx.Query(ctx, `
-		SELECT t.oid, a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod)
-		FROM pg_catalog.pg_type t
-		JOIN pg_catalog.pg_attribute a ON a.attrelid = t.typrelid
-		WHERE t.oid = ANY($1::oid[]) AND t.typtype = 'c' AND a.attnum > 0 AND NOT a.attisdropped
-		ORDER BY t.oid, a.attnum`, in.typeOIDs)
-	if err != nil {
-		return err
-	}
-	var oid uint32
-	var attr Attribute
-	_, err = pgx.ForEachRow(rows, []any{&oid, &attr.Name, &attr.Type}, func() error {
-		t := byOID[oid]
-		t.Attributes = append(t.Attributes, attr)
-		return nil
-	})
-	return err
-}
-
-// typeDependencies records which captured types each type uses, through a
-// domain's base type or a composite's attributes, looking through arrays.
-func (in *inspector) typeDependencies(ctx context.Context, byOID map[uint32]*Type) error {
-	rows, err := in.tx.Query(ctx, `
-		WITH deps AS (
-			SELECT d.objid AS type_oid, d.refobjid AS ref
-			FROM pg_catalog.pg_depend d
-			WHERE d.classid = 'pg_type'::regclass AND d.refclassid = 'pg_type'::regclass
-			  AND d.objid = ANY($1::oid[]) AND d.deptype = 'n'
-			UNION
-			SELECT t.oid, d.refobjid
-			FROM pg_catalog.pg_type t
-			JOIN pg_catalog.pg_depend d ON d.classid = 'pg_class'::regclass AND d.objid = t.typrelid
-			WHERE t.oid = ANY($1::oid[]) AND t.typtype = 'c' AND d.refclassid = 'pg_type'::regclass
-		)
-		SELECT deps.type_oid,
-		       CASE WHEN rt.typelem <> 0 AND rt.typlen = -1 THEN rt.typelem ELSE rt.oid END
-		FROM deps JOIN pg_catalog.pg_type rt ON rt.oid = deps.ref`, in.typeOIDs)
-	if err != nil {
-		return err
-	}
-	var oid, ref uint32
-	_, err = pgx.ForEachRow(rows, []any{&oid, &ref}, func() error {
-		if id, ok := in.typeID[ref]; ok && ref != oid {
-			t := byOID[oid]
-			t.DependsOn = appendUnique(t.DependsOn, id)
-		}
-		return nil
-	})
-	return err
-}
-
-// aggregateDef builds CREATE AGGREGATE for a plain aggregate, since
-// pg_get_functiondef rejects aggregates. Ordered-set and hypothetical-set
-// aggregates aren't supported.
-const aggregateDef = `'CREATE AGGREGATE ' || pg_catalog.quote_ident(n.nspname) || '.' || pg_catalog.quote_ident(p.proname)
-	|| '(' || pg_catalog.pg_get_function_arguments(p.oid) || ') (SFUNC = ' || a.aggtransfn::regproc::text
-	|| ', STYPE = ' || pg_catalog.format_type(a.aggtranstype, NULL)
-	|| CASE WHEN a.aggfinalfn <> 0 THEN ', FINALFUNC = ' || a.aggfinalfn::regproc::text ELSE '' END
-	|| CASE WHEN a.aggcombinefn <> 0 THEN ', COMBINEFUNC = ' || a.aggcombinefn::regproc::text ELSE '' END
-	|| CASE WHEN a.agginitval IS NOT NULL THEN ', INITCOND = ' || pg_catalog.quote_literal(a.agginitval) ELSE '' END
-	|| CASE p.proparallel WHEN 's' THEN ', PARALLEL = SAFE' WHEN 'r' THEN ', PARALLEL = RESTRICTED' ELSE '' END
-	|| ')'`
-
 func (in *inspector) functions(ctx context.Context) error {
 	rows, err := in.tx.Query(ctx, `
 		SELECT p.oid, n.nspname, p.proname, pg_catalog.pg_get_function_identity_arguments(p.oid), p.prokind::text,
@@ -243,6 +160,89 @@ func (in *inspector) functions(ctx context.Context) error {
 	}
 	in.out.Functions = funcs
 	return nil
+}
+
+func (in *inspector) domainChecks(ctx context.Context, byOID map[uint32]*Type) error {
+	rows, err := in.tx.Query(ctx, `
+		SELECT c.contypid, c.conname, pg_catalog.pg_get_constraintdef(c.oid)
+		FROM pg_catalog.pg_constraint c
+		WHERE c.contypid = ANY($1::oid[]) AND c.contype = 'c'
+		ORDER BY c.conname`, in.typeOIDs)
+	if err != nil {
+		return err
+	}
+	var oid uint32
+	var check Check
+	_, err = pgx.ForEachRow(rows, []any{&oid, &check.Name, &check.Definition}, func() error {
+		t := byOID[oid]
+		t.Checks = append(t.Checks, check)
+		return nil
+	})
+	return err
+}
+
+func (in *inspector) compositeAttributes(ctx context.Context, byOID map[uint32]*Type) error {
+	rows, err := in.tx.Query(ctx, `
+		SELECT t.oid, a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod)
+		FROM pg_catalog.pg_type t
+		JOIN pg_catalog.pg_attribute a ON a.attrelid = t.typrelid
+		WHERE t.oid = ANY($1::oid[]) AND t.typtype = 'c' AND a.attnum > 0 AND NOT a.attisdropped
+		ORDER BY t.oid, a.attnum`, in.typeOIDs)
+	if err != nil {
+		return err
+	}
+	var oid uint32
+	var attr Attribute
+	_, err = pgx.ForEachRow(rows, []any{&oid, &attr.Name, &attr.Type}, func() error {
+		t := byOID[oid]
+		t.Attributes = append(t.Attributes, attr)
+		return nil
+	})
+	return err
+}
+
+// aggregateDef builds CREATE AGGREGATE for a plain aggregate, since
+// pg_get_functiondef rejects aggregates. Ordered-set and hypothetical-set
+// aggregates aren't supported.
+const aggregateDef = `'CREATE AGGREGATE ' || pg_catalog.quote_ident(n.nspname) || '.' || pg_catalog.quote_ident(p.proname)
+	|| '(' || pg_catalog.pg_get_function_arguments(p.oid) || ') (SFUNC = ' || a.aggtransfn::regproc::text
+	|| ', STYPE = ' || pg_catalog.format_type(a.aggtranstype, NULL)
+	|| CASE WHEN a.aggfinalfn <> 0 THEN ', FINALFUNC = ' || a.aggfinalfn::regproc::text ELSE '' END
+	|| CASE WHEN a.aggcombinefn <> 0 THEN ', COMBINEFUNC = ' || a.aggcombinefn::regproc::text ELSE '' END
+	|| CASE WHEN a.agginitval IS NOT NULL THEN ', INITCOND = ' || pg_catalog.quote_literal(a.agginitval) ELSE '' END
+	|| CASE p.proparallel WHEN 's' THEN ', PARALLEL = SAFE' WHEN 'r' THEN ', PARALLEL = RESTRICTED' ELSE '' END
+	|| ')'`
+
+// typeDependencies records which captured types each type uses, through a
+// domain's base type or a composite's attributes, looking through arrays.
+func (in *inspector) typeDependencies(ctx context.Context, byOID map[uint32]*Type) error {
+	rows, err := in.tx.Query(ctx, `
+		WITH deps AS (
+			SELECT d.objid AS type_oid, d.refobjid AS ref
+			FROM pg_catalog.pg_depend d
+			WHERE d.classid = 'pg_type'::regclass AND d.refclassid = 'pg_type'::regclass
+			  AND d.objid = ANY($1::oid[]) AND d.deptype = 'n'
+			UNION
+			SELECT t.oid, d.refobjid
+			FROM pg_catalog.pg_type t
+			JOIN pg_catalog.pg_depend d ON d.classid = 'pg_class'::regclass AND d.objid = t.typrelid
+			WHERE t.oid = ANY($1::oid[]) AND t.typtype = 'c' AND d.refclassid = 'pg_type'::regclass
+		)
+		SELECT deps.type_oid,
+		       CASE WHEN rt.typelem <> 0 AND rt.typlen = -1 THEN rt.typelem ELSE rt.oid END
+		FROM deps JOIN pg_catalog.pg_type rt ON rt.oid = deps.ref`, in.typeOIDs)
+	if err != nil {
+		return err
+	}
+	var oid, ref uint32
+	_, err = pgx.ForEachRow(rows, []any{&oid, &ref}, func() error {
+		if id, ok := in.typeID[ref]; ok && ref != oid {
+			t := byOID[oid]
+			t.DependsOn = appendUnique(t.DependsOn, id)
+		}
+		return nil
+	})
+	return err
 }
 
 func appendUnique(list []string, s string) []string {
