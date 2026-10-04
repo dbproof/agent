@@ -8,18 +8,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// aggregateDef builds CREATE AGGREGATE for a plain aggregate, since
-// pg_get_functiondef rejects aggregates. Ordered-set and hypothetical-set
-// aggregates aren't supported.
-const aggregateDef = `'CREATE AGGREGATE ' || pg_catalog.quote_ident(n.nspname) || '.' || pg_catalog.quote_ident(p.proname)
-	|| '(' || pg_catalog.pg_get_function_arguments(p.oid) || ') (SFUNC = ' || a.aggtransfn::regproc::text
-	|| ', STYPE = ' || pg_catalog.format_type(a.aggtranstype, NULL)
-	|| CASE WHEN a.aggfinalfn <> 0 THEN ', FINALFUNC = ' || a.aggfinalfn::regproc::text ELSE '' END
-	|| CASE WHEN a.aggcombinefn <> 0 THEN ', COMBINEFUNC = ' || a.aggcombinefn::regproc::text ELSE '' END
-	|| CASE WHEN a.agginitval IS NOT NULL THEN ', INITCOND = ' || pg_catalog.quote_literal(a.agginitval) ELSE '' END
-	|| CASE p.proparallel WHEN 's' THEN ', PARALLEL = SAFE' WHEN 'r' THEN ', PARALLEL = RESTRICTED' ELSE '' END
-	|| ')'`
-
 func (in *inspector) types(ctx context.Context) error {
 	rows, err := in.tx.Query(ctx, `
 		SELECT t.oid, n.nspname, t.typname, t.typtype::text,
@@ -158,6 +146,18 @@ func (in *inspector) typeDependencies(ctx context.Context, byOID map[uint32]*Typ
 	})
 	return err
 }
+
+// aggregateDef builds CREATE AGGREGATE for a plain aggregate, since
+// pg_get_functiondef rejects aggregates. Ordered-set and hypothetical-set
+// aggregates aren't supported.
+const aggregateDef = `'CREATE AGGREGATE ' || pg_catalog.quote_ident(n.nspname) || '.' || pg_catalog.quote_ident(p.proname)
+	|| '(' || pg_catalog.pg_get_function_arguments(p.oid) || ') (SFUNC = ' || a.aggtransfn::regproc::text
+	|| ', STYPE = ' || pg_catalog.format_type(a.aggtranstype, NULL)
+	|| CASE WHEN a.aggfinalfn <> 0 THEN ', FINALFUNC = ' || a.aggfinalfn::regproc::text ELSE '' END
+	|| CASE WHEN a.aggcombinefn <> 0 THEN ', COMBINEFUNC = ' || a.aggcombinefn::regproc::text ELSE '' END
+	|| CASE WHEN a.agginitval IS NOT NULL THEN ', INITCOND = ' || pg_catalog.quote_literal(a.agginitval) ELSE '' END
+	|| CASE p.proparallel WHEN 's' THEN ', PARALLEL = SAFE' WHEN 'r' THEN ', PARALLEL = RESTRICTED' ELSE '' END
+	|| ')'`
 
 func (in *inspector) functions(ctx context.Context) error {
 	rows, err := in.tx.Query(ctx, `

@@ -34,9 +34,9 @@ check: tools gen
     @just sorted
     go test ./...
 
-# Fail if any type's methods aren't laid out as gomsort lays them out, after
-# the Uber Go style guide: grouped by type, exported first, then the rest in
-# call order. Run `bin/gomsort .` to sort them.
+# Fail if methods aren't in gomsort's order: within each run of a type's
+# methods, exported first, then the rest in call order. Nothing moves past
+# another declaration, so feature sections stay. Run `bin/gomsort .` to sort.
 sorted:
     #!/usr/bin/env bash
     set -euo pipefail

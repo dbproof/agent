@@ -30,7 +30,7 @@ require (
 	connectrpc.com/otelconnect v0.9.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/borovikovd/gomsort v0.6.0 // indirect
+	github.com/borovikovd/gomsort v0.10.0 // indirect
 	github.com/bufbuild/buf v1.73.0 // indirect
 	github.com/bufbuild/protocompile v0.14.2-0.20260910151042-7436f7c76201 // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20260414125817-25d1d281b46b // indirect
@@ -39,7 +39,6 @@ require (
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/dave/dst v0.27.3 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/cli v29.8.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.9 // indirect
@@ -95,7 +94,6 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260904194346-d0f1323225a4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260904194346-d0f1323225a4 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
