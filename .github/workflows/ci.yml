@@ -1,9 +1,19 @@
 name: CI
 
+# Documentation ships in no release, so a change to only it isn't tested.
 on:
   pull_request:
+    paths-ignore: ['docs/**', '**/*.md']
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**/*.md']
+
+# A new commit on a pull request makes its running checks moot, so they stop.
+# Runs on main each get their own group and are never cancelled: the release
+# follows them.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

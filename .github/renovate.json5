@@ -9,6 +9,9 @@
   extends: ['config:recommended', 'helpers:pinGitHubActionDigests'],
   timezone: 'Europe/London',
   schedule: ['* 6-11 * * 1'],
+  // Updates are rebased only when they conflict, not each time main moves:
+  // main's own CI runs again after the merge, before anything releases.
+  rebaseWhen: 'conflicted',
   osvVulnerabilityAlerts: true,
   semanticCommits: 'disabled',
   postUpdateOptions: ['gomodTidy'],
@@ -33,8 +36,7 @@
   packageRules: [
     {
       // Everything but a major version goes into one pull request, which
-      // Renovate merges itself once CI passes on a branch that's up to date
-      // with main. Majors wait for a person.
+      // Renovate merges itself once CI passes. Majors wait for a person.
       matchUpdateTypes: ['minor', 'patch', 'digest', 'pin', 'pinDigest'],
       groupName: 'non-major dependencies',
       automerge: true,
