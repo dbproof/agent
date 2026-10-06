@@ -7,13 +7,13 @@ The open-source half of [DbProof](https://dbproof.dev), which tests every pull r
 - **`capture`** connects with the connection string your migrations already use, reads production's schema, planner statistics and migration history, and uploads them as a snapshot.
 - **`check`** restores the latest snapshot into a throwaway Postgres and applies the pull request's migrations one at a time. DbProof then reports on the pull request what would fail or lock in production.
 
-PostgreSQL 13 and later, with Flyway or Atlas. Apache-2.0.
+PostgreSQL 13 and later, with Flyway, Atlas, Prisma Migrate or Drizzle Kit. Apache-2.0.
 
 ## What capture reads
 
 - **The catalog:** tables, columns, indexes, constraints, views, functions, triggers, policies, roles and grants.
 - **Planner estimates:** each table's row count, and each column's null fraction, distinct count and average width.
-- **Your migration history table,** with Flyway's `installed_by` replaced before upload.
+- **Your migration history table,** with Flyway's `installed_by` and Prisma's error `logs` replaced before upload.
 
 It never reads rows from your tables, or the value samples in `pg_stats` (`most_common_vals`, `histogram_bounds`). Every query is in [`capture/capture.go`](capture/capture.go) and [`schema/inspect*.go`](schema).
 
@@ -46,6 +46,7 @@ In your deploy job, capture goes on either side of the migration step:
 ```
 just check            # starts Postgres 13 and 18, lints, runs every test
 go test -short ./...  # skips the tests that need Postgres
+DBPROOF_TEST_NODE_TOOLS=1 just check  # also runs the real Prisma and Drizzle Kit (needs Node.js)
 ```
 
 `schema` inspects a Postgres schema from `pg_catalog`, diffs two schemas offline and generates DDL ([how and why](docs/schema-engine.md)). `snapshot` is the format uploaded to DbProof.

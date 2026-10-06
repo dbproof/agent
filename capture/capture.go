@@ -34,8 +34,14 @@ type Config struct {
 
 // DefaultHistoryTable returns where each tool keeps its history by default.
 func DefaultHistoryTable(tool snapshot.Tool) string {
-	if tool == snapshot.ToolAtlas {
+	switch tool {
+	case snapshot.ToolAtlas:
 		return "atlas_schema_revisions.atlas_schema_revisions"
+	case snapshot.ToolPrisma:
+		return "public._prisma_migrations"
+	case snapshot.ToolDrizzle:
+		return "drizzle.__drizzle_migrations"
+	case snapshot.ToolFlyway:
 	}
 	return "public.flyway_schema_history"
 }
@@ -184,14 +190,25 @@ var historyColumns = map[snapshot.Tool]struct{ all, required []string }{
 		all:      []string{"version", "description", "type", "applied", "total", "executed_at", "execution_time", "error", "error_stmt", "hash", "partial_hashes", "operator_version"},
 		required: []string{"version", "applied", "total"},
 	},
+	snapshot.ToolPrisma: {
+		all:      []string{"id", "checksum", "finished_at", "migration_name", "logs", "rolled_back_at", "started_at", "applied_steps_count"},
+		required: []string{"migration_name", "finished_at", "rolled_back_at"},
+	},
+	snapshot.ToolDrizzle: {
+		all:      []string{"id", "hash", "created_at"},
+		required: []string{"hash", "created_at"},
+	},
 }
 
-// redactedHistory are history columns that name a person. Capture selects a
-// constant in their place, never their values; the column stays, because the
-// check restores the rows into a table that requires it. Flyway's
-// installed_by is the database user that ran each migration.
+// redactedHistory are history columns that could name a person or hold
+// application data. Capture selects a constant in their place, never their
+// values; the column stays, because the check restores the rows into a table
+// that requires it. Flyway's installed_by is the database user that ran each
+// migration; Prisma's logs hold a failed migration's error, which can quote
+// row values, such as a duplicate key.
 var redactedHistory = map[snapshot.Tool]map[string]string{
 	snapshot.ToolFlyway: {"installed_by": "dbproof"},
+	snapshot.ToolPrisma: {"logs": ""},
 }
 
 // readHistory copies the history table row by row, as text. The simple
@@ -300,6 +317,29 @@ func Applied(h *snapshot.History) []string {
 	if h == nil {
 		return nil
 	}
+	switch h.Tool {
+	case snapshot.ToolPrisma:
+		// Prisma applies migrations in folder name order, and records a
+		// retried migration again after the failed attempt is rolled back.
+		var out []string
+		for _, row := range h.Rows {
+			name, finished, rolledBack := h.Value(row, "migration_name"), h.Value(row, "finished_at"), h.Value(row, "rolled_back_at")
+			if name != nil && finished != nil && rolledBack == nil {
+				out = append(out, *name)
+			}
+		}
+		slices.Sort(out)
+		return slices.Compact(out)
+	case snapshot.ToolDrizzle:
+		// Drizzle records each migration it applies, in journal order, with
+		// only a hash and a timestamp: the nth row is the nth migration.
+		out := make([]string, len(h.Rows))
+		for i := range h.Rows {
+			out[i] = DrizzleVersion(i)
+		}
+		return out
+	case snapshot.ToolFlyway, snapshot.ToolAtlas:
+	}
 	var out []string
 	for _, row := range h.Rows {
 		v := h.Value(row, "version")
@@ -326,6 +366,8 @@ func succeeded(h *snapshot.History, row []*string) bool {
 			return false
 		}
 		return applied != nil && total != nil && *applied == *total
+	case snapshot.ToolPrisma, snapshot.ToolDrizzle:
+		// Applied reads their histories itself.
 	}
 	return false
 }
@@ -338,4 +380,10 @@ func pgxscan(ctx context.Context, conn *pgx.Conn, out *[]string, sql string, arg
 	}
 	*out, err = pgx.CollectRows(rows, pgx.RowTo[string])
 	return err
+}
+
+// DrizzleVersion is the version of the migration at index i of Drizzle's
+// journal: its tag's number, such as 0003 in 0003_add_invoices.
+func DrizzleVersion(i int) string {
+	return fmt.Sprintf("%04d", i)
 }

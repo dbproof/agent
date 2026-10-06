@@ -31,7 +31,7 @@ func runCapture(args []string) int {
 	kind := fs.String("kind", "", "when this capture runs: pre (before migrations), post (after) or scheduled")
 	expect := fs.String("expect-version", "", "post-deploy: wait until the history shows this migration version")
 	wait := fs.Duration("wait-timeout", 10*time.Minute, "post-deploy: how long to wait for -expect-version")
-	tool := fs.String("tool", "", "flyway or atlas; overrides DbProof's project setting")
+	tool := fs.String("tool", "", "flyway, atlas, prisma or drizzle; overrides DbProof's project setting")
 	history := fs.String("history-table", "", "schema.table of the migration history; overrides DbProof's setting")
 	var exclude stringList
 	fs.Var(&exclude, "exclude", `"schema.*" or "schema.table" to leave out; repeatable; overrides DbProof's setting`)
@@ -91,8 +91,10 @@ Flags:`)
 	if len(exclude) > 0 {
 		cfg.Exclude = exclude
 	}
-	if cfg.Tool != snapshot.ToolFlyway && cfg.Tool != snapshot.ToolAtlas {
-		warn("DbProof capture skipped: set -tool to flyway or atlas")
+	switch cfg.Tool {
+	case snapshot.ToolFlyway, snapshot.ToolAtlas, snapshot.ToolPrisma, snapshot.ToolDrizzle:
+	default:
+		warn("DbProof capture skipped: set -tool to flyway, atlas, prisma or drizzle")
 		return 0
 	}
 

@@ -10,7 +10,8 @@ inputs:
   migrate-command:
     description: >-
       Your migrate command. It finds the throwaway database in DBPROOF_CHECK_*
-      variables, e.g. flyway -url=$DBPROOF_CHECK_JDBC_URL migrate.
+      variables, e.g. flyway -url=$DBPROOF_CHECK_JDBC_URL migrate, or in
+      DATABASE_URL, e.g. npx prisma migrate deploy.
     required: true
   dbproof-url:
     description: DbProof's address.

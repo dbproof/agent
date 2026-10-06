@@ -29,6 +29,8 @@ const (
 	MigrationTool_MIGRATION_TOOL_UNSPECIFIED MigrationTool = 0
 	MigrationTool_MIGRATION_TOOL_FLYWAY      MigrationTool = 1
 	MigrationTool_MIGRATION_TOOL_ATLAS       MigrationTool = 2
+	MigrationTool_MIGRATION_TOOL_PRISMA      MigrationTool = 3
+	MigrationTool_MIGRATION_TOOL_DRIZZLE     MigrationTool = 4
 )
 
 // Enum value maps for MigrationTool.
@@ -37,11 +39,15 @@ var (
 		0: "MIGRATION_TOOL_UNSPECIFIED",
 		1: "MIGRATION_TOOL_FLYWAY",
 		2: "MIGRATION_TOOL_ATLAS",
+		3: "MIGRATION_TOOL_PRISMA",
+		4: "MIGRATION_TOOL_DRIZZLE",
 	}
 	MigrationTool_value = map[string]int32{
 		"MIGRATION_TOOL_UNSPECIFIED": 0,
 		"MIGRATION_TOOL_FLYWAY":      1,
 		"MIGRATION_TOOL_ATLAS":       2,
+		"MIGRATION_TOOL_PRISMA":      3,
+		"MIGRATION_TOOL_DRIZZLE":     4,
 	}
 )
 
@@ -345,11 +351,13 @@ const file_dbproof_agent_v1_capture_proto_rawDesc = "" +
 	"\x16UploadSnapshotResponse\x12\x1d\n" +
 	"\n" +
 	"capture_id\x18\x01 \x01(\tR\tcaptureId\x12*\n" +
-	"\x11min_agent_version\x18\x02 \x01(\tR\x0fminAgentVersion*d\n" +
+	"\x11min_agent_version\x18\x02 \x01(\tR\x0fminAgentVersion*\x9b\x01\n" +
 	"\rMigrationTool\x12\x1e\n" +
 	"\x1aMIGRATION_TOOL_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15MIGRATION_TOOL_FLYWAY\x10\x01\x12\x18\n" +
-	"\x14MIGRATION_TOOL_ATLAS\x10\x022\xe0\x01\n" +
+	"\x14MIGRATION_TOOL_ATLAS\x10\x02\x12\x19\n" +
+	"\x15MIGRATION_TOOL_PRISMA\x10\x03\x12\x1a\n" +
+	"\x16MIGRATION_TOOL_DRIZZLE\x10\x042\xe0\x01\n" +
 	"\x0eCaptureService\x12i\n" +
 	"\x10GetCaptureConfig\x12).dbproof.agent.v1.GetCaptureConfigRequest\x1a*.dbproof.agent.v1.GetCaptureConfigResponse\x12c\n" +
 	"\x0eUploadSnapshot\x12'.dbproof.agent.v1.UploadSnapshotRequest\x1a(.dbproof.agent.v1.UploadSnapshotResponseB\xbd\x01\n" +

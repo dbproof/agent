@@ -35,9 +35,16 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: just
+      # Node.js runs the real Prisma and Drizzle Kit in their check test.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
       # Tools, codegen, Postgres 13 and 18, buf lint, golangci-lint and every
-      # test, including the round trip and the cross-major diff.
+      # test, including the round trip, the cross-major diff and the real
+      # Prisma and Drizzle Kit.
       - name: just check
+        env:
+          DBPROOF_TEST_NODE_TOOLS: "1"
         run: just check
       - name: Generated code is committed
         run: git diff --exit-code -- gen

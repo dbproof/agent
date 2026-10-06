@@ -23,6 +23,8 @@ enum MigrationTool {
   MIGRATION_TOOL_UNSPECIFIED = 0;
   MIGRATION_TOOL_FLYWAY = 1;
   MIGRATION_TOOL_ATLAS = 2;
+  MIGRATION_TOOL_PRISMA = 3;
+  MIGRATION_TOOL_DRIZZLE = 4;
 }
 
 message GetCaptureConfigRequest {

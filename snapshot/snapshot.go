@@ -62,8 +62,10 @@ type ColumnStats struct {
 type Tool string
 
 const (
-	ToolFlyway Tool = "flyway"
-	ToolAtlas  Tool = "atlas"
+	ToolFlyway  Tool = "flyway"
+	ToolAtlas   Tool = "atlas"
+	ToolPrisma  Tool = "prisma"
+	ToolDrizzle Tool = "drizzle"
 )
 
 // History is a migration tool's history table, row by row, as text, so a

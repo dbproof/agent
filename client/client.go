@@ -100,6 +100,10 @@ func Tool(t agentv1.MigrationTool) snapshot.Tool {
 		return snapshot.ToolAtlas
 	case agentv1.MigrationTool_MIGRATION_TOOL_FLYWAY:
 		return snapshot.ToolFlyway
+	case agentv1.MigrationTool_MIGRATION_TOOL_PRISMA:
+		return snapshot.ToolPrisma
+	case agentv1.MigrationTool_MIGRATION_TOOL_DRIZZLE:
+		return snapshot.ToolDrizzle
 	default:
 		return ""
 	}

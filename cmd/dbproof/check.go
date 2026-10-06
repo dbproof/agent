@@ -141,10 +141,18 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 		return nil, fmt.Errorf("connect to the check database: %w", err)
 	}
 	defer func() { _ = conn.Close(context.WithoutCancel(ctx)) }()
+	var migrator check.Migrator = check.CommandMigrator{Command: f.migrateCommand, Tool: tool, DSN: f.database}
+	if tool == snapshot.ToolPrisma || tool == snapshot.ToolDrizzle {
+		dir, err := filepath.Abs(f.migrationsDir)
+		if err != nil {
+			return nil, err
+		}
+		migrator = check.Staged{Migrator: migrator, Tool: tool, Dir: dir, Files: files}
+	}
 	r, err := check.Run(ctx, check.Config{
 		Conn: conn, Snapshot: snap, SnapshotLabel: begin.Msg.GetSnapshotVersion(), Tool: tool,
 		Files: files, PullRequestFiles: prFiles, MigratorName: migratorName(f.migrateCommand),
-		Migrator: check.CommandMigrator{Command: f.migrateCommand, Tool: tool, DSN: f.database},
+		Migrator: migrator,
 	})
 	if err != nil {
 		return nil, err
@@ -251,13 +259,13 @@ func pullRequestFiles(ctx context.Context, f checkFlags) ([]string, error) {
 
 func migratorName(command string) string {
 	fields := strings.Fields(command)
-	for _, tool := range []string{"flyway", "atlas"} {
+	for _, tool := range []struct{ bin, name string }{
+		{"flyway", "flyway migrate"}, {"atlas", "atlas migrate apply"},
+		{"prisma", "prisma migrate deploy"}, {"drizzle-kit", "drizzle-kit migrate"},
+	} {
 		for _, f := range fields {
-			if strings.HasSuffix(f, tool) || strings.Contains(f, "/"+tool) {
-				if tool == "atlas" {
-					return "atlas migrate apply"
-				}
-				return "flyway migrate"
+			if strings.HasSuffix(f, tool.bin) || strings.Contains(f, "/"+tool.bin) {
+				return tool.name
 			}
 		}
 	}

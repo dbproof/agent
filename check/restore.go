@@ -58,6 +58,21 @@ func restore(ctx context.Context, conn *pgx.Conn, snap *snapshot.Snapshot) error
 			return fmt.Errorf("restore migration history: %w", err)
 		}
 	}
+	// The rows keep production's IDs, which leaves a serial ID's sequence
+	// behind them, as in Drizzle's history: the tool's next row would reuse
+	// an ID. The sequence moves past them.
+	for i, c := range snap.History.Columns {
+		var seq *string
+		if err := conn.QueryRow(ctx, "SELECT pg_get_serial_sequence($1, $2)", snap.History.Table, c).Scan(&seq); err != nil {
+			return fmt.Errorf("find %s's sequence: %w", c, err)
+		}
+		if seq == nil {
+			continue
+		}
+		if _, err := conn.Exec(ctx, "SELECT setval($1, (SELECT max("+cols[i]+") FROM "+snap.History.Table+"))", *seq); err != nil {
+			return fmt.Errorf("move %s's sequence past the restored history: %w", c, err)
+		}
+	}
 	return nil
 }
 

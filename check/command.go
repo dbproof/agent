@@ -24,7 +24,8 @@ type CommandMigrator struct {
 }
 
 // Env returns the variables the command sees, so a command can say
-// -url=$DBPROOF_CHECK_JDBC_URL or --url "$DBPROOF_CHECK_DSN".
+// -url=$DBPROOF_CHECK_JDBC_URL or --url "$DBPROOF_CHECK_DSN", or rely on
+// DATABASE_URL.
 func (m CommandMigrator) Env() ([]string, error) {
 	u, err := url.Parse(m.DSN)
 	if err != nil {
@@ -49,6 +50,9 @@ func (m CommandMigrator) Env() ([]string, error) {
 		"FLYWAY_URL=jdbc:postgresql://" + u.Hostname() + ":" + port + "/" + db,
 		"FLYWAY_USER=" + u.User.Username(),
 		"FLYWAY_PASSWORD=" + password,
+		// Prisma and Drizzle Kit read their database from DATABASE_URL, as
+		// their projects conventionally configure it.
+		"DATABASE_URL=" + m.DSN,
 	}, nil
 }
 

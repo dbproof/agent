@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -173,7 +174,7 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 			m := &group.migrations[i]
 			next, changedFiles, err := r.apply(ctx, cfg, m, current)
 			if errors.Is(err, errNotRecorded) {
-				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show V%s, so it ran against another database. Point it at the check database: -url=$DBPROOF_CHECK_JDBC_URL for Flyway, --url \"$DBPROOF_CHECK_DSN\" for Atlas.", m.Version), stepStart)
+				r.setup(group.name, fmt.Sprintf("The migrate command succeeded, but the check database's history doesn't show %s, so it ran against another database. Point it at the check database: -url=$DBPROOF_CHECK_JDBC_URL for Flyway, --url \"$DBPROOF_CHECK_DSN\" for Atlas, and for Prisma and Drizzle leave DATABASE_URL to the check, which sets it.", label(cfg.Tool, m.Version)), stepStart)
 				return done(), nil
 			}
 			if errors.Is(err, errStaleAtlasSum) {
@@ -198,12 +199,12 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 		}
 		versions := make([]string, len(group.migrations))
 		for i, m := range group.migrations {
-			versions[i] = "V" + m.Version
+			versions[i] = label(cfg.Tool, m.Version)
 		}
 		detail := strings.Join(versions, ", ") + " · " + cfg.MigratorName
 		status := StatusOK
 		if failed != "" {
-			detail, status = "V"+failed+" failed", StatusFailed
+			detail, status = label(cfg.Tool, failed)+" failed", StatusFailed
 		}
 		r.step(group.name, detail, status, stepStart)
 	}
@@ -230,7 +231,7 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	}
 	after, err := schema.Inspect(ctx, cfg.Conn, schema.Options{})
 	if err != nil {
-		return nil, nil, fmt.Errorf("inspect after V%s: %w", m.Version, err)
+		return nil, nil, fmt.Errorf("inspect after %s: %w", label(cfg.Tool, m.Version), err)
 	}
 	recorded, err := historyShows(ctx, cfg, m.Version)
 	if err != nil {
@@ -248,6 +249,15 @@ func (r *Report) apply(ctx context.Context, cfg Config, m *Migration, before *sc
 	return after, nil, nil
 }
 
+// label names a migration as its tool does: V146 for Flyway's and Atlas's
+// versions; Prisma's folder name and Drizzle's journal number as they are.
+func label(tool snapshot.Tool, version string) string {
+	if tool == snapshot.ToolFlyway || tool == snapshot.ToolAtlas {
+		return "V" + version
+	}
+	return version
+}
+
 // errStaleAtlasSum means atlas.sum doesn't match the migration files.
 var errStaleAtlasSum = errors.New("atlas.sum doesn't match the migration files")
 
@@ -263,11 +273,23 @@ func historyShows(ctx context.Context, cfg Config, version string) (bool, error)
 		return true, nil
 	}
 	sql := "SELECT EXISTS (SELECT 1 FROM " + h.Table + " WHERE version = $1)"
-	if cfg.Tool == snapshot.ToolFlyway {
+	var arg any = version
+	switch cfg.Tool {
+	case snapshot.ToolFlyway:
 		sql = "SELECT EXISTS (SELECT 1 FROM " + h.Table + " WHERE version = $1 AND success)"
+	case snapshot.ToolPrisma:
+		sql = "SELECT EXISTS (SELECT 1 FROM " + h.Table + " WHERE migration_name = $1 AND finished_at IS NOT NULL AND rolled_back_at IS NULL)"
+	case snapshot.ToolAtlas:
+	case snapshot.ToolDrizzle:
+		// The migration at index n is recorded once the history has n+1 rows.
+		n, err := strconv.Atoi(version)
+		if err != nil {
+			return false, fmt.Errorf("drizzle migration %q: %w", version, err)
+		}
+		sql, arg = "SELECT count(*) > $1 FROM "+h.Table, n
 	}
 	var ok bool
-	if err := cfg.Conn.QueryRow(ctx, sql, version).Scan(&ok); err != nil {
+	if err := cfg.Conn.QueryRow(ctx, sql, arg).Scan(&ok); err != nil {
 		return false, fmt.Errorf("read the check database's history: %w", err)
 	}
 	return ok, nil

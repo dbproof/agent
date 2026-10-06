@@ -189,3 +189,51 @@ func TestCaptureFindsAtlasHistoryInPublic(t *testing.T) {
 		t.Errorf("Applied = %v, want both migrations", got)
 	}
 }
+
+// Prisma's history counts a migration once it finishes and isn't rolled
+// back; a failed attempt's error log, which can quote row values, is never
+// captured.
+func TestCaptureReadsPrismaHistory(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	db := pgtest.NewDB(t, server)
+	pgtest.Exec(t, db, `
+		CREATE TABLE _prisma_migrations (id varchar(36) PRIMARY KEY, checksum varchar(64) NOT NULL, finished_at timestamptz,
+		  migration_name varchar(255) NOT NULL, logs text, rolled_back_at timestamptz, started_at timestamptz NOT NULL DEFAULT now(),
+		  applied_steps_count integer NOT NULL DEFAULT 0);
+		INSERT INTO _prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at) VALUES
+		  ('c', 'x', now(), '20260103000000_tax_id', NULL, NULL),
+		  ('a', 'x', now(), '20260101000000_init', NULL, NULL),
+		  ('b1', 'x', NULL, '20260102000000_email', 'Key (email)=(ada@example.com) already exists.', now()),
+		  ('b2', 'x', now(), '20260102000000_email', NULL, NULL),
+		  ('d', 'x', NULL, '20260104000000_failing', 'Key (email)=(bob@example.com) already exists.', NULL);`)
+	snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolPrisma})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := capture.Applied(snap.History), []string{"20260101000000_init", "20260102000000_email", "20260103000000_tax_id"}; !slices.Equal(got, want) {
+		t.Errorf("applied = %v, want %v", got, want)
+	}
+	for _, row := range snap.History.Rows {
+		if logs := snap.History.Value(row, "logs"); logs != nil && *logs != "" {
+			t.Fatalf("captured logs %q, want them blanked", *logs)
+		}
+	}
+}
+
+// Drizzle's history has only hashes and timestamps; its nth row is the
+// journal's nth migration.
+func TestCaptureReadsDrizzleHistory(t *testing.T) {
+	server := pgtest.Servers(t)[0]
+	db := pgtest.NewDB(t, server)
+	pgtest.Exec(t, db, `
+		CREATE SCHEMA drizzle;
+		CREATE TABLE drizzle.__drizzle_migrations (id serial PRIMARY KEY, hash text NOT NULL, created_at bigint);
+		INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ('h0', 1700000000000), ('h1', 1700000000001);`)
+	snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolDrizzle})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := capture.Applied(snap.History), []string{"0000", "0001"}; !slices.Equal(got, want) {
+		t.Errorf("applied = %v, want %v", got, want)
+	}
+}
