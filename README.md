@@ -19,7 +19,7 @@ It never reads rows from your tables, or the value samples in `pg_stats` (`most_
 
 ## GitHub Actions
 
-DbProof's setup pull request adds both, pinned by commit.
+DbProof's setup pull request adds both, through their GitHub Marketplace wrappers [DbProof check](https://github.com/marketplace/actions/dbproof-check) and [DbProof capture](https://github.com/marketplace/actions/dbproof-capture). To pin the agent by commit instead, use the actions here directly.
 
 | Action | Runs | Authenticates with |
 | --- | --- | --- |
