@@ -176,7 +176,10 @@ func TestCaptureFindsAtlasHistoryInPublic(t *testing.T) {
 		);
 		INSERT INTO atlas_schema_revisions VALUES
 		  ('20260901120000', 'init', 2, 3, 3, now(), 1000, NULL, NULL, 'h1', NULL, 'Atlas CLI v1.3.0'),
-		  ('20260915120000', 'customers', 2, 1, 1, now(), 1000, NULL, NULL, 'h2', NULL, 'Atlas CLI v1.3.0');`)
+		  ('20260915120000', 'customers', 2, 1, 1, now(), 1000, NULL, NULL, 'h2', NULL, 'Atlas CLI v1.3.0'),
+		  ('20260920120000', 'unique emails', 2, 0, 1, now(), 1000,
+		   'pq: could not create unique index "customers_email_key": Key (email)=(ana@example.com) is duplicated.',
+		   'CREATE UNIQUE INDEX customers_email_key ON customers (email)', 'h3', NULL, 'Atlas CLI v1.3.0');`)
 
 	snap, err := capture.Run(context.Background(), pgtest.Connect(t, db), capture.Config{Kind: snapshot.KindScheduled, Tool: snapshot.ToolAtlas})
 	if err != nil {
@@ -185,8 +188,17 @@ func TestCaptureFindsAtlasHistoryInPublic(t *testing.T) {
 	if snap.History.Table != "public.atlas_schema_revisions" {
 		t.Errorf("history table = %q, want public.atlas_schema_revisions", snap.History.Table)
 	}
+	// The failed migration still counts as failed, but its error, which
+	// quotes a row, never leaves the database.
 	if got := capture.Applied(snap.History); !slices.Equal(got, []string{"20260901120000", "20260915120000"}) {
-		t.Errorf("Applied = %v, want both migrations", got)
+		t.Errorf("Applied = %v, want the two that succeeded", got)
+	}
+	for _, row := range snap.History.Rows {
+		for _, v := range row {
+			if v != nil && strings.Contains(*v, "ana@example.com") {
+				t.Fatalf("captured %q, want Atlas's error redacted", *v)
+			}
+		}
 	}
 }
 

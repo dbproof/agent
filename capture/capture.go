@@ -201,14 +201,17 @@ var historyColumns = map[snapshot.Tool]struct{ all, required []string }{
 }
 
 // redactedHistory are history columns that could name a person or hold
-// application data. Capture selects a constant in their place, never their
+// application data, with the SQL capture selects in their place, never their
 // values; the column stays, because the check restores the rows into a table
 // that requires it. Flyway's installed_by is the database user that ran each
-// migration; Prisma's logs hold a failed migration's error, which can quote
-// row values, such as a duplicate key.
+// migration. Prisma's logs and Atlas's error and error_stmt hold a failed
+// migration's error and statement, which can quote row values, such as a
+// duplicate key; Atlas's error keeps only whether there was one, which says
+// the migration failed.
 var redactedHistory = map[snapshot.Tool]map[string]string{
-	snapshot.ToolFlyway: {"installed_by": "dbproof"},
-	snapshot.ToolPrisma: {"logs": ""},
+	snapshot.ToolFlyway: {"installed_by": "'dbproof'"},
+	snapshot.ToolPrisma: {"logs": "''"},
+	snapshot.ToolAtlas:  {"error": "CASE WHEN error <> '' THEN 'redacted' END", "error_stmt": "NULL"},
 }
 
 // readHistory copies the history table row by row, as text. The simple
@@ -245,7 +248,7 @@ func readHistory(ctx context.Context, conn *pgx.Conn, tool snapshot.Tool, table 
 		}
 		col := pgx.Identifier{c}.Sanitize()
 		if v, ok := redactedHistory[tool][c]; ok {
-			col = schema.QuoteLiteral(v) + " AS " + col
+			col = v + " AS " + col
 		}
 		cols = append(cols, col)
 	}
