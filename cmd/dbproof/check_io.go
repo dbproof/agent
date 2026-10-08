@@ -189,10 +189,10 @@ func severity(f *agentv1.Finding) string {
 // has the full list.
 func annotate(w *strings.Builder, v *agentv1.GetCheckVerdictResponse) {
 	if v.GetSetupProblem() != "" {
-		fmt.Fprintf(w, "::warning title=DbProof setup problem::%s\n", escape(v.GetSetupProblem()))
+		fmt.Fprintf(w, "::warning title=DbProof setup problem::%s\n", escapeData(v.GetSetupProblem()))
 	}
 	for _, f := range v.GetFindings() {
-		fmt.Fprintf(w, "::%s file=%s,line=%d,title=%s::%s\n", severity(f), f.GetFile(), max(f.GetLine(), 1), escape(f.GetTitle()), escape(f.GetDetail()+" "+f.GetFix()))
+		fmt.Fprintf(w, "::%s file=%s,line=%d,title=%s::%s\n", severity(f), escapeProperty(f.GetFile()), max(f.GetLine(), 1), escapeProperty(f.GetTitle()), escapeData(f.GetDetail()+" "+f.GetFix()))
 	}
 }
 
@@ -217,7 +217,15 @@ func summary(v *agentv1.GetCheckVerdictResponse) string {
 	return b.String()
 }
 
-func escape(s string) string {
+// escapeData escapes a workflow command's message, where GitHub decodes
+// only %, CR and LF.
+func escapeData(s string) string {
+	return strings.NewReplacer("%", "%25", "\r", "%0D", "\n", "%0A").Replace(s)
+}
+
+// escapeProperty escapes a property's value, such as a title, where : and ,
+// would otherwise end it.
+func escapeProperty(s string) string {
 	return strings.NewReplacer("%", "%25", "\r", "%0D", "\n", "%0A", ":", "%3A", ",", "%2C").Replace(s)
 }
 
