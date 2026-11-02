@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
@@ -69,7 +68,7 @@ Flags:`)
 	c := client.New(client.Options{BaseURL: env["DBPROOF_URL"], Token: env["DBPROOF_CAPTURE_TOKEN"], Project: os.Getenv("DBPROOF_PROJECT")})
 
 	cfg := capture.Config{Kind: k, ExpectVersion: *expect, WaitTimeout: *wait, AgentVersion: version}
-	remote, err := c.Capture.GetCaptureConfig(ctx, connect.NewRequest(&agentv1.GetCaptureConfigRequest{AgentVersion: version}))
+	remote, err := c.Capture.GetCaptureConfig(ctx, &agentv1.GetCaptureConfigRequest{AgentVersion: version})
 	if err != nil {
 		if !isUnreachable(err) {
 			warn("DbProof capture skipped: %v", err)
@@ -77,10 +76,10 @@ Flags:`)
 		}
 		warn("DbProof is unreachable (%v); capturing with local settings, then retrying the upload", err)
 	} else {
-		cfg.Tool = client.Tool(remote.Msg.GetTool())
-		cfg.HistoryTable = remote.Msg.GetHistoryTable()
-		cfg.Exclude = remote.Msg.GetExclusions()
-		fmt.Fprintf(os.Stderr, "Capturing %s for %s\n", k, remote.Msg.GetProject())
+		cfg.Tool = client.Tool(remote.GetTool())
+		cfg.HistoryTable = remote.GetHistoryTable()
+		cfg.Exclude = remote.GetExclusions()
+		fmt.Fprintf(os.Stderr, "Capturing %s for %s\n", k, remote.GetProject())
 	}
 	if *tool != "" {
 		cfg.Tool = snapshot.Tool(*tool)
@@ -108,18 +107,18 @@ Flags:`)
 		warn("DbProof capture skipped: %v", err)
 		return 0
 	}
-	resp, err := c.Capture.UploadSnapshot(ctx, connect.NewRequest(&agentv1.UploadSnapshotRequest{
+	resp, err := c.Capture.UploadSnapshot(ctx, &agentv1.UploadSnapshotRequest{
 		UploadId:     uuid.NewString(),
 		Snapshot:     body,
 		AgentVersion: version,
 		CommitSha:    os.Getenv("GITHUB_SHA"),
-	}))
+	})
 	if err != nil {
 		warn("DbProof capture wasn't uploaded: %v", err)
 		return 0
 	}
-	fmt.Fprintf(os.Stderr, "Uploaded capture %s (%d tables, %d KB)\n", resp.Msg.GetCaptureId(), len(snap.Schema.Tables), len(body)/1024)
-	if minVersion := resp.Msg.GetMinAgentVersion(); client.OlderThan(version, minVersion) {
+	fmt.Fprintf(os.Stderr, "Uploaded capture %s (%d tables, %d KB)\n", resp.GetCaptureId(), len(snap.Schema.Tables), len(body)/1024)
+	if minVersion := resp.GetMinAgentVersion(); client.OlderThan(version, minVersion) {
 		warn("This agent (%s) is older than DbProof supports (%s); upgrade it", version, minVersion)
 	}
 	return 0

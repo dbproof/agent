@@ -5,170 +5,174 @@
 package agentv1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// CheckServiceName is the fully-qualified name of the CheckService service.
 	CheckServiceName = "dbproof.agent.v1.CheckService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CheckServiceBeginCheckProcedure is the fully-qualified name of the CheckService's BeginCheck RPC.
+	// CheckServiceBeginCheckProcedure is the procedure name of the CheckService's BeginCheck RPC.
 	CheckServiceBeginCheckProcedure = "/dbproof.agent.v1.CheckService/BeginCheck"
-	// CheckServiceReportCheckProcedure is the fully-qualified name of the CheckService's ReportCheck
-	// RPC.
+	// CheckServiceReportCheckProcedure is the procedure name of the CheckService's ReportCheck RPC.
 	CheckServiceReportCheckProcedure = "/dbproof.agent.v1.CheckService/ReportCheck"
-	// CheckServiceGetCheckVerdictProcedure is the fully-qualified name of the CheckService's
-	// GetCheckVerdict RPC.
+	// CheckServiceGetCheckVerdictProcedure is the procedure name of the CheckService's GetCheckVerdict
+	// RPC.
 	CheckServiceGetCheckVerdictProcedure = "/dbproof.agent.v1.CheckService/GetCheckVerdict"
+)
+
+var (
+	checkServiceBeginCheckSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_dbproof_agent_v1_check_proto.Services().ByName("CheckService").Methods().ByName("BeginCheck"),
+			Procedure:  CheckServiceBeginCheckProcedure,
+		}
+	})
+	checkServiceReportCheckSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_dbproof_agent_v1_check_proto.Services().ByName("CheckService").Methods().ByName("ReportCheck"),
+			Procedure:  CheckServiceReportCheckProcedure,
+		}
+	})
+	checkServiceGetCheckVerdictSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_dbproof_agent_v1_check_proto.Services().ByName("CheckService").Methods().ByName("GetCheckVerdict"),
+			Procedure:  CheckServiceGetCheckVerdictProcedure,
+		}
+	})
 )
 
 // CheckServiceClient is a client for the dbproof.agent.v1.CheckService service.
 type CheckServiceClient interface {
 	// BeginCheck registers a check run and returns the snapshot to restore.
-	BeginCheck(context.Context, *connect.Request[v1.BeginCheckRequest]) (*connect.Response[v1.BeginCheckResponse], error)
+	BeginCheck(context.Context, *v1.BeginCheckRequest) (*v1.BeginCheckResponse, error)
 	// ReportCheck sends what happened in the runner. DbProof evaluates the
 	// rules afterwards; poll GetCheckVerdict for the result.
-	ReportCheck(context.Context, *connect.Request[v1.ReportCheckRequest]) (*connect.Response[v1.ReportCheckResponse], error)
+	ReportCheck(context.Context, *v1.ReportCheckRequest) (*v1.ReportCheckResponse, error)
 	// GetCheckVerdict returns the verdict once DbProof has one.
-	GetCheckVerdict(context.Context, *connect.Request[v1.GetCheckVerdictRequest]) (*connect.Response[v1.GetCheckVerdictResponse], error)
+	GetCheckVerdict(context.Context, *v1.GetCheckVerdictRequest) (*v1.GetCheckVerdictResponse, error)
 }
 
-// NewCheckServiceClient constructs a client for the dbproof.agent.v1.CheckService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewCheckServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CheckServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	checkServiceMethods := v1.File_dbproof_agent_v1_check_proto.Services().ByName("CheckService").Methods()
-	return &checkServiceClient{
-		beginCheck: connect.NewClient[v1.BeginCheckRequest, v1.BeginCheckResponse](
-			httpClient,
-			baseURL+CheckServiceBeginCheckProcedure,
-			connect.WithSchema(checkServiceMethods.ByName("BeginCheck")),
-			connect.WithClientOptions(opts...),
-		),
-		reportCheck: connect.NewClient[v1.ReportCheckRequest, v1.ReportCheckResponse](
-			httpClient,
-			baseURL+CheckServiceReportCheckProcedure,
-			connect.WithSchema(checkServiceMethods.ByName("ReportCheck")),
-			connect.WithClientOptions(opts...),
-		),
-		getCheckVerdict: connect.NewClient[v1.GetCheckVerdictRequest, v1.GetCheckVerdictResponse](
-			httpClient,
-			baseURL+CheckServiceGetCheckVerdictProcedure,
-			connect.WithSchema(checkServiceMethods.ByName("GetCheckVerdict")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// checkServiceClient implements CheckServiceClient.
-type checkServiceClient struct {
-	beginCheck      *connect.Client[v1.BeginCheckRequest, v1.BeginCheckResponse]
-	reportCheck     *connect.Client[v1.ReportCheckRequest, v1.ReportCheckResponse]
-	getCheckVerdict *connect.Client[v1.GetCheckVerdictRequest, v1.GetCheckVerdictResponse]
-}
-
-// BeginCheck calls dbproof.agent.v1.CheckService.BeginCheck.
-func (c *checkServiceClient) BeginCheck(ctx context.Context, req *connect.Request[v1.BeginCheckRequest]) (*connect.Response[v1.BeginCheckResponse], error) {
-	return c.beginCheck.CallUnary(ctx, req)
-}
-
-// ReportCheck calls dbproof.agent.v1.CheckService.ReportCheck.
-func (c *checkServiceClient) ReportCheck(ctx context.Context, req *connect.Request[v1.ReportCheckRequest]) (*connect.Response[v1.ReportCheckResponse], error) {
-	return c.reportCheck.CallUnary(ctx, req)
-}
-
-// GetCheckVerdict calls dbproof.agent.v1.CheckService.GetCheckVerdict.
-func (c *checkServiceClient) GetCheckVerdict(ctx context.Context, req *connect.Request[v1.GetCheckVerdictRequest]) (*connect.Response[v1.GetCheckVerdictResponse], error) {
-	return c.getCheckVerdict.CallUnary(ctx, req)
+// NewCheckServiceClient constructs a client for the dbproof.agent.v1.CheckService service. Multiple
+// service clients may share a single connect.Client.
+func NewCheckServiceClient(client *connect.Client) CheckServiceClient {
+	return &checkServiceClient{client: client}
 }
 
 // CheckServiceHandler is an implementation of the dbproof.agent.v1.CheckService service.
 type CheckServiceHandler interface {
 	// BeginCheck registers a check run and returns the snapshot to restore.
-	BeginCheck(context.Context, *connect.Request[v1.BeginCheckRequest]) (*connect.Response[v1.BeginCheckResponse], error)
+	BeginCheck(context.Context, *v1.BeginCheckRequest) (*v1.BeginCheckResponse, error)
 	// ReportCheck sends what happened in the runner. DbProof evaluates the
 	// rules afterwards; poll GetCheckVerdict for the result.
-	ReportCheck(context.Context, *connect.Request[v1.ReportCheckRequest]) (*connect.Response[v1.ReportCheckResponse], error)
+	ReportCheck(context.Context, *v1.ReportCheckRequest) (*v1.ReportCheckResponse, error)
 	// GetCheckVerdict returns the verdict once DbProof has one.
-	GetCheckVerdict(context.Context, *connect.Request[v1.GetCheckVerdictRequest]) (*connect.Response[v1.GetCheckVerdictResponse], error)
+	GetCheckVerdict(context.Context, *v1.GetCheckVerdictRequest) (*v1.GetCheckVerdictResponse, error)
 }
 
-// NewCheckServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewCheckServiceHandler(svc CheckServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	checkServiceMethods := v1.File_dbproof_agent_v1_check_proto.Services().ByName("CheckService").Methods()
-	checkServiceBeginCheckHandler := connect.NewUnaryHandler(
-		CheckServiceBeginCheckProcedure,
-		svc.BeginCheck,
-		connect.WithSchema(checkServiceMethods.ByName("BeginCheck")),
-		connect.WithHandlerOptions(opts...),
+// RegisterCheckServiceHandler registers svc as the dbproof.agent.v1.CheckService implementation on
+// server.
+func RegisterCheckServiceHandler(server *connect.Server, svc CheckServiceHandler) {
+	adapter := checkServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: checkServiceBeginCheckSpec(), Handler: adapter.beginCheck},
+		connect.Method{Spec: checkServiceReportCheckSpec(), Handler: adapter.reportCheck},
+		connect.Method{Spec: checkServiceGetCheckVerdictSpec(), Handler: adapter.getCheckVerdict},
 	)
-	checkServiceReportCheckHandler := connect.NewUnaryHandler(
-		CheckServiceReportCheckProcedure,
-		svc.ReportCheck,
-		connect.WithSchema(checkServiceMethods.ByName("ReportCheck")),
-		connect.WithHandlerOptions(opts...),
-	)
-	checkServiceGetCheckVerdictHandler := connect.NewUnaryHandler(
-		CheckServiceGetCheckVerdictProcedure,
-		svc.GetCheckVerdict,
-		connect.WithSchema(checkServiceMethods.ByName("GetCheckVerdict")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/dbproof.agent.v1.CheckService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case CheckServiceBeginCheckProcedure:
-			checkServiceBeginCheckHandler.ServeHTTP(w, r)
-		case CheckServiceReportCheckProcedure:
-			checkServiceReportCheckHandler.ServeHTTP(w, r)
-		case CheckServiceGetCheckVerdictProcedure:
-			checkServiceGetCheckVerdictHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedCheckServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCheckServiceHandler struct{}
 
-func (UnimplementedCheckServiceHandler) BeginCheck(context.Context, *connect.Request[v1.BeginCheckRequest]) (*connect.Response[v1.BeginCheckResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("dbproof.agent.v1.CheckService.BeginCheck is not implemented"))
+func (UnimplementedCheckServiceHandler) BeginCheck(context.Context, *v1.BeginCheckRequest) (*v1.BeginCheckResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "dbproof.agent.v1.CheckService.BeginCheck is not implemented")
 }
 
-func (UnimplementedCheckServiceHandler) ReportCheck(context.Context, *connect.Request[v1.ReportCheckRequest]) (*connect.Response[v1.ReportCheckResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("dbproof.agent.v1.CheckService.ReportCheck is not implemented"))
+func (UnimplementedCheckServiceHandler) ReportCheck(context.Context, *v1.ReportCheckRequest) (*v1.ReportCheckResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "dbproof.agent.v1.CheckService.ReportCheck is not implemented")
 }
 
-func (UnimplementedCheckServiceHandler) GetCheckVerdict(context.Context, *connect.Request[v1.GetCheckVerdictRequest]) (*connect.Response[v1.GetCheckVerdictResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("dbproof.agent.v1.CheckService.GetCheckVerdict is not implemented"))
+func (UnimplementedCheckServiceHandler) GetCheckVerdict(context.Context, *v1.GetCheckVerdictRequest) (*v1.GetCheckVerdictResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "dbproof.agent.v1.CheckService.GetCheckVerdict is not implemented")
+}
+
+type checkServiceClient struct {
+	client *connect.Client
+}
+
+func (c *checkServiceClient) BeginCheck(ctx context.Context, req *v1.BeginCheckRequest) (*v1.BeginCheckResponse, error) {
+	var res v1.BeginCheckResponse
+	if err := c.client.CallUnary(ctx, checkServiceBeginCheckSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *checkServiceClient) ReportCheck(ctx context.Context, req *v1.ReportCheckRequest) (*v1.ReportCheckResponse, error) {
+	var res v1.ReportCheckResponse
+	if err := c.client.CallUnary(ctx, checkServiceReportCheckSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *checkServiceClient) GetCheckVerdict(ctx context.Context, req *v1.GetCheckVerdictRequest) (*v1.GetCheckVerdictResponse, error) {
+	var res v1.GetCheckVerdictResponse
+	if err := c.client.CallUnary(ctx, checkServiceGetCheckVerdictSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type checkServiceHandler struct{ svc CheckServiceHandler }
+
+func (h checkServiceHandler) beginCheck(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.BeginCheckRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.BeginCheck(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h checkServiceHandler) reportCheck(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.ReportCheckRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.ReportCheck(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h checkServiceHandler) getCheckVerdict(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetCheckVerdictRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetCheckVerdict(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"connectrpc.com/connect"
+	"connectrpc.com/connect/v2"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/dbproof/agent/check"
@@ -96,22 +96,22 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 	if err != nil {
 		return nil, err
 	}
-	begin, err := c.Check.BeginCheck(ctx, connect.NewRequest(&agentv1.BeginCheckRequest{
+	begin, err := c.Check.BeginCheck(ctx, &agentv1.BeginCheckRequest{
 		Project:           f.project,
 		PullRequest:       pr,
 		WorkflowRunId:     envInt64("GITHUB_RUN_ID"),
 		RunAttempt:        envInt32("GITHUB_RUN_ATTEMPT"),
 		AgentVersion:      version,
 		FailOnUnreachable: f.failOnUnreachable,
-	}))
+	})
 	if err != nil {
 		return nil, unreachable(err)
 	}
-	snap, err := snapshot.Decode(begin.Msg.GetSnapshot())
+	snap, err := snapshot.Decode(begin.GetSnapshot())
 	if err != nil {
 		return nil, err
 	}
-	tool := client.Tool(begin.Msg.GetTool())
+	tool := client.Tool(begin.GetTool())
 	files, err := check.ListFiles(tool, f.migrationsDir)
 	if err != nil {
 		return nil, fmt.Errorf("list migrations: %w", err)
@@ -150,21 +150,21 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 		migrator = check.Staged{Migrator: migrator, Tool: tool, Dir: dir, Files: files}
 	}
 	r, err := check.Run(ctx, check.Config{
-		Conn: conn, Snapshot: snap, SnapshotLabel: begin.Msg.GetSnapshotVersion(), Tool: tool,
+		Conn: conn, Snapshot: snap, SnapshotLabel: begin.GetSnapshotVersion(), Tool: tool,
 		Files: files, PullRequestFiles: prFiles, MigratorName: migratorName(f.migrateCommand),
 		Migrator: migrator,
 	})
 	if err != nil {
 		return nil, err
 	}
-	req, err := reportRequest(begin.Msg.GetCheckId(), r, f.repoRoot)
+	req, err := reportRequest(begin.GetCheckId(), r, f.repoRoot)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := c.Check.ReportCheck(ctx, connect.NewRequest(req)); err != nil {
+	if _, err := c.Check.ReportCheck(ctx, req); err != nil {
 		return nil, unreachable(err)
 	}
-	return waitForVerdict(ctx, c, begin.Msg.GetCheckId(), f.verdictTimeout)
+	return waitForVerdict(ctx, c, begin.GetCheckId(), f.verdictTimeout)
 }
 
 // waitForVerdict polls until DbProof has evaluated the check, or the wait
@@ -172,12 +172,12 @@ func checkPullRequest(ctx context.Context, dbproofURL string, f checkFlags) (*ag
 func waitForVerdict(ctx context.Context, c *client.Client, checkID string, timeout time.Duration) (*agentv1.GetCheckVerdictResponse, error) {
 	deadline := time.Now().Add(timeout)
 	for {
-		resp, err := c.Check.GetCheckVerdict(ctx, connect.NewRequest(&agentv1.GetCheckVerdictRequest{CheckId: checkID}))
+		resp, err := c.Check.GetCheckVerdict(ctx, &agentv1.GetCheckVerdictRequest{CheckId: checkID})
 		if err != nil {
 			return nil, unreachable(err)
 		}
-		if resp.Msg.GetReady() {
-			return resp.Msg, nil
+		if resp.GetReady() {
+			return resp, nil
 		}
 		if time.Now().After(deadline) {
 			return nil, errUnavailable

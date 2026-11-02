@@ -5,140 +5,137 @@
 package agentv1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
-	errors "errors"
 	v1 "github.com/dbproof/agent/gen/dbproof/agent/v1"
-	http "net/http"
-	strings "strings"
+	sync "sync"
 )
-
-// This is a compile-time assertion to ensure that this generated file and the connect package are
-// compatible. If you get a compiler error that this constant is not defined, this code was
-// generated with a version of connect newer than the one compiled into your binary. You can fix the
-// problem by either regenerating this code with an older version of connect or updating the connect
-// version compiled into your binary.
-const _ = connect.IsAtLeastVersion1_13_0
 
 const (
 	// CaptureServiceName is the fully-qualified name of the CaptureService service.
 	CaptureServiceName = "dbproof.agent.v1.CaptureService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
+// These constants are the procedure names of the RPCs defined in this package. They're exposed at
+// runtime as Spec.Procedure and as the final two segments of the HTTP route.
 //
 // Note that these are different from the fully-qualified method names used by
 // google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CaptureServiceGetCaptureConfigProcedure is the fully-qualified name of the CaptureService's
+	// CaptureServiceGetCaptureConfigProcedure is the procedure name of the CaptureService's
 	// GetCaptureConfig RPC.
 	CaptureServiceGetCaptureConfigProcedure = "/dbproof.agent.v1.CaptureService/GetCaptureConfig"
-	// CaptureServiceUploadSnapshotProcedure is the fully-qualified name of the CaptureService's
+	// CaptureServiceUploadSnapshotProcedure is the procedure name of the CaptureService's
 	// UploadSnapshot RPC.
 	CaptureServiceUploadSnapshotProcedure = "/dbproof.agent.v1.CaptureService/UploadSnapshot"
+)
+
+var (
+	captureServiceGetCaptureConfigSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_dbproof_agent_v1_capture_proto.Services().ByName("CaptureService").Methods().ByName("GetCaptureConfig"),
+			Procedure:  CaptureServiceGetCaptureConfigProcedure,
+		}
+	})
+	captureServiceUploadSnapshotSpec = sync.OnceValue(func() connect.Spec {
+		return connect.Spec{
+			StreamType: connect.StreamTypeUnary,
+			Schema:     v1.File_dbproof_agent_v1_capture_proto.Services().ByName("CaptureService").Methods().ByName("UploadSnapshot"),
+			Procedure:  CaptureServiceUploadSnapshotProcedure,
+		}
+	})
 )
 
 // CaptureServiceClient is a client for the dbproof.agent.v1.CaptureService service.
 type CaptureServiceClient interface {
 	// GetCaptureConfig returns what the agent needs before it inspects the
 	// database: which tables to leave out and where the migration history is.
-	GetCaptureConfig(context.Context, *connect.Request[v1.GetCaptureConfigRequest]) (*connect.Response[v1.GetCaptureConfigResponse], error)
+	GetCaptureConfig(context.Context, *v1.GetCaptureConfigRequest) (*v1.GetCaptureConfigResponse, error)
 	// UploadSnapshot stores a snapshot. Retrying with the same upload_id is safe.
-	UploadSnapshot(context.Context, *connect.Request[v1.UploadSnapshotRequest]) (*connect.Response[v1.UploadSnapshotResponse], error)
+	UploadSnapshot(context.Context, *v1.UploadSnapshotRequest) (*v1.UploadSnapshotResponse, error)
 }
 
-// NewCaptureServiceClient constructs a client for the dbproof.agent.v1.CaptureService service. By
-// default, it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses,
-// and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the
-// connect.WithGRPC() or connect.WithGRPCWeb() options.
-//
-// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
-// http://api.acme.com or https://acme.com/grpc).
-func NewCaptureServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CaptureServiceClient {
-	baseURL = strings.TrimRight(baseURL, "/")
-	captureServiceMethods := v1.File_dbproof_agent_v1_capture_proto.Services().ByName("CaptureService").Methods()
-	return &captureServiceClient{
-		getCaptureConfig: connect.NewClient[v1.GetCaptureConfigRequest, v1.GetCaptureConfigResponse](
-			httpClient,
-			baseURL+CaptureServiceGetCaptureConfigProcedure,
-			connect.WithSchema(captureServiceMethods.ByName("GetCaptureConfig")),
-			connect.WithClientOptions(opts...),
-		),
-		uploadSnapshot: connect.NewClient[v1.UploadSnapshotRequest, v1.UploadSnapshotResponse](
-			httpClient,
-			baseURL+CaptureServiceUploadSnapshotProcedure,
-			connect.WithSchema(captureServiceMethods.ByName("UploadSnapshot")),
-			connect.WithClientOptions(opts...),
-		),
-	}
-}
-
-// captureServiceClient implements CaptureServiceClient.
-type captureServiceClient struct {
-	getCaptureConfig *connect.Client[v1.GetCaptureConfigRequest, v1.GetCaptureConfigResponse]
-	uploadSnapshot   *connect.Client[v1.UploadSnapshotRequest, v1.UploadSnapshotResponse]
-}
-
-// GetCaptureConfig calls dbproof.agent.v1.CaptureService.GetCaptureConfig.
-func (c *captureServiceClient) GetCaptureConfig(ctx context.Context, req *connect.Request[v1.GetCaptureConfigRequest]) (*connect.Response[v1.GetCaptureConfigResponse], error) {
-	return c.getCaptureConfig.CallUnary(ctx, req)
-}
-
-// UploadSnapshot calls dbproof.agent.v1.CaptureService.UploadSnapshot.
-func (c *captureServiceClient) UploadSnapshot(ctx context.Context, req *connect.Request[v1.UploadSnapshotRequest]) (*connect.Response[v1.UploadSnapshotResponse], error) {
-	return c.uploadSnapshot.CallUnary(ctx, req)
+// NewCaptureServiceClient constructs a client for the dbproof.agent.v1.CaptureService service.
+// Multiple service clients may share a single connect.Client.
+func NewCaptureServiceClient(client *connect.Client) CaptureServiceClient {
+	return &captureServiceClient{client: client}
 }
 
 // CaptureServiceHandler is an implementation of the dbproof.agent.v1.CaptureService service.
 type CaptureServiceHandler interface {
 	// GetCaptureConfig returns what the agent needs before it inspects the
 	// database: which tables to leave out and where the migration history is.
-	GetCaptureConfig(context.Context, *connect.Request[v1.GetCaptureConfigRequest]) (*connect.Response[v1.GetCaptureConfigResponse], error)
+	GetCaptureConfig(context.Context, *v1.GetCaptureConfigRequest) (*v1.GetCaptureConfigResponse, error)
 	// UploadSnapshot stores a snapshot. Retrying with the same upload_id is safe.
-	UploadSnapshot(context.Context, *connect.Request[v1.UploadSnapshotRequest]) (*connect.Response[v1.UploadSnapshotResponse], error)
+	UploadSnapshot(context.Context, *v1.UploadSnapshotRequest) (*v1.UploadSnapshotResponse, error)
 }
 
-// NewCaptureServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
-//
-// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
-// and JSON codecs. They also support gzip compression.
-func NewCaptureServiceHandler(svc CaptureServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	captureServiceMethods := v1.File_dbproof_agent_v1_capture_proto.Services().ByName("CaptureService").Methods()
-	captureServiceGetCaptureConfigHandler := connect.NewUnaryHandler(
-		CaptureServiceGetCaptureConfigProcedure,
-		svc.GetCaptureConfig,
-		connect.WithSchema(captureServiceMethods.ByName("GetCaptureConfig")),
-		connect.WithHandlerOptions(opts...),
+// RegisterCaptureServiceHandler registers svc as the dbproof.agent.v1.CaptureService implementation
+// on server.
+func RegisterCaptureServiceHandler(server *connect.Server, svc CaptureServiceHandler) {
+	adapter := captureServiceHandler{svc: svc}
+	server.Register(
+		connect.Method{Spec: captureServiceGetCaptureConfigSpec(), Handler: adapter.getCaptureConfig},
+		connect.Method{Spec: captureServiceUploadSnapshotSpec(), Handler: adapter.uploadSnapshot},
 	)
-	captureServiceUploadSnapshotHandler := connect.NewUnaryHandler(
-		CaptureServiceUploadSnapshotProcedure,
-		svc.UploadSnapshot,
-		connect.WithSchema(captureServiceMethods.ByName("UploadSnapshot")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/dbproof.agent.v1.CaptureService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case CaptureServiceGetCaptureConfigProcedure:
-			captureServiceGetCaptureConfigHandler.ServeHTTP(w, r)
-		case CaptureServiceUploadSnapshotProcedure:
-			captureServiceUploadSnapshotHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
 }
 
 // UnimplementedCaptureServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedCaptureServiceHandler struct{}
 
-func (UnimplementedCaptureServiceHandler) GetCaptureConfig(context.Context, *connect.Request[v1.GetCaptureConfigRequest]) (*connect.Response[v1.GetCaptureConfigResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("dbproof.agent.v1.CaptureService.GetCaptureConfig is not implemented"))
+func (UnimplementedCaptureServiceHandler) GetCaptureConfig(context.Context, *v1.GetCaptureConfigRequest) (*v1.GetCaptureConfigResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "dbproof.agent.v1.CaptureService.GetCaptureConfig is not implemented")
 }
 
-func (UnimplementedCaptureServiceHandler) UploadSnapshot(context.Context, *connect.Request[v1.UploadSnapshotRequest]) (*connect.Response[v1.UploadSnapshotResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("dbproof.agent.v1.CaptureService.UploadSnapshot is not implemented"))
+func (UnimplementedCaptureServiceHandler) UploadSnapshot(context.Context, *v1.UploadSnapshotRequest) (*v1.UploadSnapshotResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, "dbproof.agent.v1.CaptureService.UploadSnapshot is not implemented")
+}
+
+type captureServiceClient struct {
+	client *connect.Client
+}
+
+func (c *captureServiceClient) GetCaptureConfig(ctx context.Context, req *v1.GetCaptureConfigRequest) (*v1.GetCaptureConfigResponse, error) {
+	var res v1.GetCaptureConfigResponse
+	if err := c.client.CallUnary(ctx, captureServiceGetCaptureConfigSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (c *captureServiceClient) UploadSnapshot(ctx context.Context, req *v1.UploadSnapshotRequest) (*v1.UploadSnapshotResponse, error) {
+	var res v1.UploadSnapshotResponse
+	if err := c.client.CallUnary(ctx, captureServiceUploadSnapshotSpec(), req, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+type captureServiceHandler struct{ svc CaptureServiceHandler }
+
+func (h captureServiceHandler) getCaptureConfig(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.GetCaptureConfigRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.GetCaptureConfig(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
+}
+
+func (h captureServiceHandler) uploadSnapshot(ctx context.Context, _ connect.Spec, stream connect.ServerStream) error {
+	var req v1.UploadSnapshotRequest
+	if err := stream.Receive(&req); err != nil {
+		return err
+	}
+	res, err := h.svc.UploadSnapshot(ctx, &req)
+	if err != nil {
+		return err
+	}
+	return stream.Send(res)
 }
