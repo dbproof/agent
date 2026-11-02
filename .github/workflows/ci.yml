@@ -38,7 +38,7 @@ jobs:
       # Node.js runs the real Prisma and Drizzle Kit in their check test.
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24
+          node-version: 26
       # Tools, codegen, Postgres 13 and 18, buf lint, golangci-lint and every
       # test, including the round trip, the cross-major diff and the real
       # Prisma and Drizzle Kit.
