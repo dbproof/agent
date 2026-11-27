@@ -1,7 +1,7 @@
 # DbProof agent. Tests need the Postgres servers from compose.yaml.
 
 golangci_version := "v2.15.0"
-atlas_version := "v1.3.0"
+atlas_version := "v1.4.0"
 
 export PATH := justfile_directory() / "bin" + ":" + env_var("PATH")
 
