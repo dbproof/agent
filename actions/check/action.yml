@@ -55,7 +55,7 @@ runs:
         path: ${{ runner.temp }}/dbproof
         key: dbproof-agent-${{ runner.os }}-${{ runner.arch }}-${{ env.DBPROOF_AGENT_SOURCE }}-${{ env.DBPROOF_AGENT_REF }}
     - if: steps.agent-cache.outputs.cache-hit != 'true'
-      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
       with:
         go-version-file: ${{ env.DBPROOF_AGENT_ROOT }}/go.mod
         cache: false
